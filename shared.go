@@ -43,6 +43,7 @@ func TestExample(t *testing.T) {
 type CabinetTest struct{
 	client pb.CDSCabinetClient
 	test *testing.T
+	bench *testing.B
 	conn *grpc.ClientConn
 
 	ctx context.Context
