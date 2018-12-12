@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"io"
 	"sort"
 	"sync"
 	"testing"
@@ -53,21 +54,21 @@ func TestCRUD(t *testing.T) {
 	tester.logThing(updStatus, err, "doUpdate")
 
 	if updStatus.GetStatus() != pb.MutationStatus_SUCCESS{
-		tester.test.Errorf("QUpdate(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, updStatus)
+		tester.test.Errorf("doUpdate(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, updStatus)
 	}
 
 	updValue, err := tester.doGet("n", lastSeq.GetSeqid())
 	tester.logThing(updValue, err, "doGet")
 
 	if updValue.GetNode() != "YYYY"{
-		tester.test.Errorf("QGet(%d): expected %s, actual %s", lastSeq.GetSeqid(), "YYYY", updValue)
+		tester.test.Errorf("doGet(%d): expected %s, actual %s", lastSeq.GetSeqid(), "YYYY", updValue)
 	}
 
 	delStatus, err := tester.doDelete("n", lastSeq.GetSeqid())
 	tester.logThing(delStatus, err, "doDelete")
 
 	if delStatus.GetStatus() != pb.MutationStatus_SUCCESS{
-		tester.test.Errorf("QDelete(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, delStatus)
+		tester.test.Errorf("doDelete(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, delStatus)
 	}
 
 	expectedNull, err := tester.doGet("n", lastSeq.GetSeqid())
@@ -80,12 +81,15 @@ func TestCRUD(t *testing.T) {
 
 	// new sequential types should also start at 1
 	var randType = fmt.Sprintf("test_%s", test_helpers.SecureRandomAlphaString(5))
+	var nodeRandMap = make(map[uint32]string)
 
 	newSeq, err := tester.doCreate(randType, "XXXXXX")
 	tester.logThing(newSeq, err, fmt.Sprintf("doCreate(%s)", randType) )
 
 	if newSeq.GetSeqid() != 1{
-		tester.test.Errorf("Excepected newly created sequence  to be 1, got %d", newSeq.GetSeqid())
+		tester.test.Errorf("Excepected newly created sequence to be 1, got %d", newSeq.GetSeqid())
+	}else{
+		nodeRandMap[newSeq.GetSeqid()] = "XXXXXX"
 	}
 
 	// try Y in sequence and ensure that IDs are continuous
@@ -93,13 +97,17 @@ func TestCRUD(t *testing.T) {
 	expected := uint32(2)
 
 	for x < TestSequentialSize{
-		serialSeq, err := tester.doCreate(randType, "XXXXX")
+		var rNode = "XXXX" + test_helpers.SecureRandomAlphaString(10)
+
+		serialSeq, err := tester.doCreate(randType, rNode)
 		tester.logThing(serialSeq, err, fmt.Sprintf("%d * doCreate(%s)", x, randType) )
 
 		if err == nil && serialSeq.GetSeqid() != expected{
 			tester.test.Errorf("[E] Serial number test, got %d expected %d", serialSeq.GetSeqid(), expected)
 			break
 		}
+
+		nodeRandMap[expected] = rNode
 
 		x += 1
 		expected += 1
@@ -163,8 +171,37 @@ func TestCRUD(t *testing.T) {
 	gr3, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n"}) // Missing Seq
 	tester.logRejection(gr3, err, "SequentialGet(Type, Seq=nil)")
 
-	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: newSeq.GetSeqid(), Node: "XXXX"}) // Extra None
+	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: newSeq.GetSeqid(), Node: "XXXX"}) // Extra Node
 	tester.logRejection(gr4, err, "SequentialGet(Type, Seq, +Node)")
+
+	// Bad Signature (List)
+	ls1, err := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}})
+
+	for{
+		ls1S, err := ls1.Recv()
+
+		if err == io.EOF {
+
+		}else{
+			tester.logRejection(ls1S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=100)")
+		}
+
+		break
+	}
+
+	ls2, err := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: randType, Opt: &pb.ListOptions{Mode: pb.RetrieveMode_ALL}})
+
+	for{
+		ls2S, err := ls2.Recv()
+
+		if err == io.EOF {
+
+		}else{
+			tester.logRejection(ls2S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=nil)")
+		}
+
+		break
+	}
 
 	// attempt to simulate conflicts (cds.cabinet should resolve them automatically)
 	var wg sync.WaitGroup
@@ -202,6 +239,53 @@ func TestCRUD(t *testing.T) {
 
 		ex += 1
 	}
+
+	// attempt to List all sequences in $randType
+	listCtx, listCancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer listCancel()
+
+	listOpt := &pb.ListOptions{Mode: pb.RetrieveMode_ALL, PageSize: 100}
+	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{Type: randType, Opt: listOpt})
+	expID := uint32(1)
+
+	if err != nil{
+		tester.test.Errorf("[E] %v.SequentialList(%s) = _. %v", client, randType, err)
+	}else{
+		for {
+			sequence, err := lStr.Recv()
+
+			if err == io.EOF {
+				break
+			}else if err != nil {
+				tester.test.Errorf("[E] %v.SequentialList(_) = _, %v", client, err)
+				break
+			}else {
+				isError := false
+
+				if sequence.GetType() != randType {
+					tester.test.Errorf("[E] sequence.type got %s expected %s", sequence.GetType(), randType)
+					isError = true
+				}
+
+				if sequence.GetSeqid() != expID {
+					tester.test.Errorf("[E] sequence.seqId got %d expected %d", sequence.GetSeqid(), expID)
+					isError = true
+				}
+
+				if sequence.GetNode() != nodeRandMap[sequence.GetSeqid()] {
+					tester.test.Errorf("[E] sequence.node got %s expected %s", sequence.GetNode(), nodeRandMap[sequence.GetSeqid()])
+					isError = true
+				}
+
+				if !isError{
+					tester.test.Logf("[I] %v.SequentialList(%s) got %v", client, randType, sequence)
+				}
+			}
+
+			expID += 1
+		}
+	}
+
 }
 
 func parallelSequenceInsert(tester *SequenceTest, sType string, wg *sync.WaitGroup) {
