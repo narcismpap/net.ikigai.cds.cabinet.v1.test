@@ -142,8 +142,8 @@ func TestSequenceCRUD(t *testing.T) {
 	tester := CabinetTest{test: t}
 	tester.setup()
 
-	lastSeq, err := tester.doSequenceCreate("n", "XXXXX")
-	tester.logThing(lastSeq, err, "doSequenceCreate")
+	lastSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
+	tester.logThing(lastSeq, err, "SequentialCreate")
 
 	updStatus, err := tester.doSequenceUpdate("n", "YYYY", lastSeq.GetSeqid())
 	tester.logThing(updStatus, err, "doSequenceUpdate")
@@ -183,8 +183,8 @@ func TestSequenceNumberInit(t *testing.T) {
 
 	var randType = fmt.Sprintf("test_%s", tester.randomAlpha(5))
 
-	newSeq, err := tester.doSequenceCreate(randType, "XXXXXX")
-	tester.logThing(newSeq, err, fmt.Sprintf("doSequenceCreate(%s)", randType) )
+	newSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Node: "XXXXX"})
+	tester.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", randType) )
 
 	if newSeq.GetSeqid() != 1{
 		tester.test.Errorf("Excepected newly created sequence to be 1, got %d", newSeq.GetSeqid())
@@ -203,8 +203,8 @@ func TestSequenceNumberSeries(t *testing.T) {
 	for expected < TestSequentialSize{
 		var rNode = "XXXX" + tester.randomAlpha(10)
 
-		serialSeq, err := tester.doSequenceCreate(randType, rNode)
-		tester.logThing(serialSeq, err, fmt.Sprintf("%d * doSequenceCreate(%s)", expected, randType) )
+		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Node: rNode})
+		tester.logThing(serialSeq, err, fmt.Sprintf("%d * SequentialCreate(%s)", expected, randType) )
 
 		if err == nil && serialSeq.GetSeqid() != expected{
 			tester.test.Errorf("[E] Serial number test, got %d expected %d", serialSeq.GetSeqid(), expected)
@@ -273,10 +273,10 @@ func TestSequenceList(t *testing.T) {
 	// create nodes
 	for i < TestSequentialSize{
 		var rNode = "XXXX" + tester.randomAlpha(10)
-		serialSeq, err := tester.doSequenceCreate(randType, rNode)
+		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Node: rNode})
 
 		if err != nil{
-			tester.test.Errorf("[E] Unexpected %v.doSequenceCreate(%s) = _. %v", tester.client, randType, err)
+			tester.test.Errorf("[E] Unexpected %v.SequentialCreate(%s) = _. %v", tester.client, randType, err)
 			break
 		}else{
 			nodeRandMap[serialSeq.GetSeqid()] = rNode
@@ -338,8 +338,8 @@ func parallelSequenceInsert(tester *CabinetTest, sType string, wg *sync.WaitGrou
 	wg.Add(1)
 
 	go func() {
-		newSeq, err := tester.doSequenceCreate(sType, "XXXXXX")
-		tester.logThing(newSeq, err, fmt.Sprintf("doSequenceCreate(%s)", sType) )
+		newSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: sType, Node: "XXXXXX"})
+		tester.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", sType) )
 
 		if err == nil{
 			tester.parallelMux.Lock()
