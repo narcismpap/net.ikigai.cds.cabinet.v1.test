@@ -145,33 +145,33 @@ func TestSequenceCRUD(t *testing.T) {
 	lastSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
 	tester.logThing(lastSeq, err, "SequentialCreate")
 
-	updStatus, err := tester.doSequenceUpdate("n", "YYYY", lastSeq.GetSeqid())
-	tester.logThing(updStatus, err, "doSequenceUpdate")
+	updStatus, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: "n", Node: "YYYY", Seqid: lastSeq.GetSeqid()})
+	tester.logThing(updStatus, err, "SequentialUpdate")
 
 	if updStatus.GetStatus() != pb.MutationStatus_SUCCESS{
-		tester.test.Errorf("doSequenceUpdate(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, updStatus)
+		tester.test.Errorf("SequentialUpdate(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, updStatus)
 	}
 
-	updValue, err := tester.doSequenceGet("n", lastSeq.GetSeqid())
-	tester.logThing(updValue, err, "doSequenceGet")
+	updValue, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: lastSeq.GetSeqid()})
+	tester.logThing(updValue, err, "SequentialGet")
 
 	if updValue.GetNode() != "YYYY"{
-		tester.test.Errorf("doSequenceGet(%d): expected %s, actual %s", lastSeq.GetSeqid(), "YYYY", updValue)
+		tester.test.Errorf("SequentialGet(%d): expected %s, actual %s", lastSeq.GetSeqid(), "YYYY", updValue)
 	}
 
-	delStatus, err := tester.doSequenceDelete("n", lastSeq.GetSeqid())
-	tester.logThing(delStatus, err, "doSequenceDelete")
+	delStatus, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Seqid: lastSeq.GetSeqid()})
+	tester.logThing(delStatus, err, "SequentialDelete")
 
 	if delStatus.GetStatus() != pb.MutationStatus_SUCCESS{
-		tester.test.Errorf("doSequenceDelete(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, delStatus)
+		tester.test.Errorf("SequentialDelete(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, delStatus)
 	}
 
-	expectedNull, err := tester.doSequenceGet("n", lastSeq.GetSeqid())
+	expectedNull, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: lastSeq.GetSeqid()})
 
 	if err != nil{
 		tester.test.Logf("[I] Object %d was deleted as expected", lastSeq.GetSeqid())
 	}else{
-		tester.logThing(expectedNull, err, "doSequenceGet")
+		tester.logThing(expectedNull, err, "SequentialGet")
 	}
 
 	tester.tearDown()
