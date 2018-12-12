@@ -25,28 +25,179 @@ const (
 	TestGRPCService = "127.0.0.1:8888"
 )
 
-func TestCRUD(t *testing.T) {
+type SequenceTest struct{
+	client pb.CDSCabinetClient
+	test *testing.T
+	conn *grpc.ClientConn
+
+	ctx context.Context
+	cancel context.CancelFunc
+
+	parallelIDs []uint32
+	parallelMux sync.Mutex
+}
+
+/*
+func TestStub(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+
+	tester.tearDown()
+}
+*/
+
+func (s *SequenceTest) setup(){
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(TestGRPCService, opts...)
+
+	var err error
+	s.conn, err = grpc.Dial(TestGRPCService, opts...)
 
 	if err != nil {
-		t.Errorf("fail to dial: %v", err)
+		s.test.Errorf("fail to dial: %v", err)
 	}
 
-	defer conn.Close()
+	s.client = pb.NewCDSCabinetClient(s.conn)
+	s.ctx, s.cancel = context.WithTimeout(context.Background(), 10 * time.Second)
+}
 
-	client := pb.NewCDSCabinetClient(conn)
+func (s *SequenceTest) tearDown(){
+	err := s.conn.Close()
 
-	tester := SequenceTest{
-		client: client,
-		test: t,
+	if err != nil{
+		s.test.Errorf("[E] Unable to close connection %v because %v", s.conn, err)
 	}
 
-	tester.ctx, tester.cancel = context.WithTimeout(context.Background(), 10 * time.Second)
-	defer tester.cancel()
+	s.cancel()
+}
 
-	// CRUD basic testing
+
+func TestBadSignatureCreate(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n"}) // missing Node
+	tester.logRejection(mt1, err, "SequentialCreate(Type, Node=nil)")
+
+	mt2, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Node: "XXXX"}) // missing Type
+	tester.logRejection(mt2, err, "SequentialCreate(Type=nil, Node)")
+
+	mt3, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{}) // missing Type & None
+	tester.logRejection(mt3, err, "SequentialCreate(Type=nil, Node=nil)")
+
+	mt4, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Node: "XXXX", Type: "n", Seqid: uint32(100)}) // Unexpected Seqid
+	tester.logRejection(mt4, err, "SequentialCreate(Type, Node, +Seqid)")
+
+	tester.tearDown()
+}
+
+func TestBadSignatureUpdate(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	// Bad Signature (Update)
+	up1, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{}) // missing Type, Node, Seqid
+	tester.logRejection(up1, err, "SequentialUpdate(Type=nil, Node=nil, Seq=nil)")
+
+	up2, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXX"}) // missing SeqID
+	tester.logRejection(up2, err, "SequentialUpdate(Type, Node, Seq=nil)")
+
+	up3, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100)}) // missing Node
+	tester.logRejection(up3, err, "SequentialUpdate(Type, Node=nil, Seq)")
+
+	up4, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Node: "XXX", Seqid: uint32(100)}) // missing Type
+	tester.logRejection(up4, err, "SequentialUpdate(Type=nil, Node, Seq)")
+
+	up5, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Seqid: uint32(100)}) // missing Type & Node
+	tester.logRejection(up5, err, "SequentialUpdate(Type=nil, Node=nil, Seq)")
+
+	up6, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Node: "XXX"}) // missing Type & Sequence
+	tester.logRejection(up6, err, "SequentialUpdate(Type=nil, Node, Seq=nil)")
+
+	up7, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: "n"}) // missing Node & Sequence
+	tester.logRejection(up7, err, "SequentialUpdate(Type, Node=nil, Seq=nil)")
+
+	tester.tearDown()
+}
+
+func TestBadSignatureDelete(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	dl1, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n"}) // missing SeqID
+	tester.logRejection(dl1, err, "SequentialDelete(Type, Seq=nil)")
+
+	dl2, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Seqid: uint32(100)}) // missing Type
+	tester.logRejection(dl2, err, "SequentialDelete(Type=nil, Seq)")
+
+	dl3, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{}) // missing Type & SeqId
+	tester.logRejection(dl3, err, "SequentialDelete(Type=nil, Seq=nil)")
+
+	dl4, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Node: "xxx"}) // extra Node
+	tester.logRejection(dl4, err, "SequentialDelete(Type, Seq, +Node)")
+
+	tester.tearDown()
+}
+
+func TestBadSignatureGet(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	gr1, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{}) // Missing Type & Seq
+	tester.logRejection(gr1, err, "SequentialGet(Type=nil, Seq=nil)")
+
+	gr2, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Seqid: uint32(100)}) // Missing Type
+	tester.logRejection(gr2, err, "SequentialGet(Type=nil, Seq)")
+
+	gr3, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n"}) // Missing Seq
+	tester.logRejection(gr3, err, "SequentialGet(Type, Seq=nil)")
+
+	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Node: "XXXX"}) // Extra Node
+	tester.logRejection(gr4, err, "SequentialGet(Type, Seq, +Node)")
+
+	tester.tearDown()
+}
+
+func TestBadSignatureList(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	ls1, err1 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}})
+
+	if err1 != nil{
+		tester.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err1)
+	}else{
+		for{
+			ls1S, err := ls1.Recv()
+			if err == io.EOF {}else{
+				tester.logRejection(ls1S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=100)")
+			}
+			break
+		}
+	}
+
+	ls2, err2 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.RetrieveMode_ALL}})
+
+	if err2 != nil{
+		tester.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err2)
+	}else {
+		for {
+			ls2S, err := ls2.Recv()
+			if err == io.EOF {} else {
+				tester.logRejection(ls2S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=nil)")
+			}
+			break
+		}
+	}
+
+	tester.tearDown()
+}
+
+func TestCRUD(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
 	lastSeq, err := tester.doCreate("n", "XXXXX")
 	tester.logThing(lastSeq, err, "doCreate")
 
@@ -79,131 +230,53 @@ func TestCRUD(t *testing.T) {
 		tester.logThing(expectedNull, err, "doGet")
 	}
 
-	// new sequential types should also start at 1
+	tester.tearDown()
+}
+
+func TestNumberInit(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
 	var randType = fmt.Sprintf("test_%s", test_helpers.SecureRandomAlphaString(5))
-	var nodeRandMap = make(map[uint32]string)
 
 	newSeq, err := tester.doCreate(randType, "XXXXXX")
 	tester.logThing(newSeq, err, fmt.Sprintf("doCreate(%s)", randType) )
 
 	if newSeq.GetSeqid() != 1{
 		tester.test.Errorf("Excepected newly created sequence to be 1, got %d", newSeq.GetSeqid())
-	}else{
-		nodeRandMap[newSeq.GetSeqid()] = "XXXXXX"
 	}
 
-	// try Y in sequence and ensure that IDs are continuous
-	x := 1
-	expected := uint32(2)
+	tester.tearDown()
+}
 
-	for x < TestSequentialSize{
+func TestNumberSeries(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	var randType = fmt.Sprintf("test_%s", test_helpers.SecureRandomAlphaString(5))
+	expected := uint32(1)
+
+	for expected <= TestSequentialSize{
 		var rNode = "XXXX" + test_helpers.SecureRandomAlphaString(10)
 
 		serialSeq, err := tester.doCreate(randType, rNode)
-		tester.logThing(serialSeq, err, fmt.Sprintf("%d * doCreate(%s)", x, randType) )
+		tester.logThing(serialSeq, err, fmt.Sprintf("%d * doCreate(%s)", expected, randType) )
 
 		if err == nil && serialSeq.GetSeqid() != expected{
 			tester.test.Errorf("[E] Serial number test, got %d expected %d", serialSeq.GetSeqid(), expected)
 			break
 		}
 
-		nodeRandMap[expected] = rNode
-
-		x += 1
 		expected += 1
 	}
 
-	// Bad Signature (Create)
-	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n"}) // missing Node
-	tester.logRejection(mt1, err, "SequentialCreate(Type, Node=nil)")
+	tester.tearDown()
+}
 
-	mt2, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Node: "XXXX"}) // missing Type
-	tester.logRejection(mt2, err, "SequentialCreate(Type=nil, Node)")
+func TestConflicts(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
 
-	mt3, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{}) // missing Type & None
-	tester.logRejection(mt3, err, "SequentialCreate(Type=nil, Node=nil)")
-
-	mt4, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Node: "XXXX", Type: "n", Seqid: 100}) // Unexpected Seqid
-	tester.logRejection(mt4, err, "SequentialCreate(Type, Node, +Seqid)")
-
-	// Bad Signature (Update)
-	up1, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{}) // missing Type, Node, Seqid
-	tester.logRejection(up1, err, "SequentialUpdate(Type=nil, Node=nil, Seq=nil)")
-
-	up2, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: randType, Node: "XXX"}) // missing SeqID
-	tester.logRejection(up2, err, "SequentialUpdate(Type, Node, Seq=nil)")
-
-	up3, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: randType, Seqid: newSeq.GetSeqid()}) // missing Node
-	tester.logRejection(up3, err, "SequentialUpdate(Type, Node=nil, Seq)")
-
-	up4, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Node: "XXX", Seqid: newSeq.GetSeqid()}) // missing Type
-	tester.logRejection(up4, err, "SequentialUpdate(Type=nil, Node, Seq)")
-
-	up5, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Seqid: newSeq.GetSeqid()}) // missing Type & Node
-	tester.logRejection(up5, err, "SequentialUpdate(Type=nil, Node=nil, Seq)")
-
-	up6, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Node: "XXX"}) // missing Type & Sequence
-	tester.logRejection(up6, err, "SequentialUpdate(Type=nil, Node, Seq=nil)")
-
-	up7, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{Type: randType}) // missing Node & Sequence
-	tester.logRejection(up7, err, "SequentialUpdate(Type, Node=nil, Seq=nil)")
-
-	// Bad Signature (Delete)
-	dl1, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n"}) // missing SeqID
-	tester.logRejection(dl1, err, "SequentialDelete(Type, Seq=nil)")
-
-	dl2, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Seqid: newSeq.GetSeqid()}) // missing Type
-	tester.logRejection(dl2, err, "SequentialDelete(Type=nil, Seq)")
-
-	dl3, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{}) // missing Type & SeqId
-	tester.logRejection(dl3, err, "SequentialDelete(Type=nil, Seq=nil)")
-
-	dl4, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Seqid: newSeq.GetSeqid(), Node: "xxx"}) // extra Node
-	tester.logRejection(dl4, err, "SequentialDelete(Type, Seq, +Node)")
-
-	// Bad Signature (Get)
-	gr1, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{}) // Missing Type & Seq
-	tester.logRejection(gr1, err, "SequentialGet(Type=nil, Seq=nil)")
-
-	gr2, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Seqid: newSeq.GetSeqid()}) // Missing Type
-	tester.logRejection(gr2, err, "SequentialGet(Type=nil, Seq)")
-
-	gr3, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n"}) // Missing Seq
-	tester.logRejection(gr3, err, "SequentialGet(Type, Seq=nil)")
-
-	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: newSeq.GetSeqid(), Node: "XXXX"}) // Extra Node
-	tester.logRejection(gr4, err, "SequentialGet(Type, Seq, +Node)")
-
-	// Bad Signature (List)
-	ls1, err := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}})
-
-	for{
-		ls1S, err := ls1.Recv()
-
-		if err == io.EOF {
-
-		}else{
-			tester.logRejection(ls1S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=100)")
-		}
-
-		break
-	}
-
-	ls2, err := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: randType, Opt: &pb.ListOptions{Mode: pb.RetrieveMode_ALL}})
-
-	for{
-		ls2S, err := ls2.Recv()
-
-		if err == io.EOF {
-
-		}else{
-			tester.logRejection(ls2S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=nil)")
-		}
-
-		break
-	}
-
-	// attempt to simulate conflicts (cds.cabinet should resolve them automatically)
 	var wg sync.WaitGroup
 
 	var pc = 1
@@ -230,7 +303,9 @@ func TestCRUD(t *testing.T) {
 
 	// sort SeqIDs and check if as-expected (sequential)
 	var ex = uint32(1)
-	sort.Slice(tester.parallelIDs, func(i, j int) bool { return tester.parallelIDs[i] < tester.parallelIDs[j] })
+	sort.Slice(tester.parallelIDs, func(i, j int) bool {
+		return tester.parallelIDs[i] < tester.parallelIDs[j]
+	})
 
 	for q := range tester.parallelIDs {
 		if tester.parallelIDs[q] != ex{
@@ -240,7 +315,33 @@ func TestCRUD(t *testing.T) {
 		ex += 1
 	}
 
-	// attempt to List all sequences in $randType
+	tester.tearDown()
+}
+
+func TestList(t *testing.T) {
+	tester := SequenceTest{test: t}
+	tester.setup()
+
+	var nodeRandMap = make(map[uint32]string)
+	var randType = fmt.Sprintf("test_%s", test_helpers.SecureRandomAlphaString(5))
+	var i = 0
+
+	// create nodes
+	for i < TestSequentialSize{
+		var rNode = "XXXX" + test_helpers.SecureRandomAlphaString(10)
+		serialSeq, err := tester.doCreate(randType, rNode)
+
+		if err != nil{
+			tester.test.Errorf("[E] Unexpected %v.doCreate(%s) = _. %v", tester.client, randType, err)
+			break
+		}else{
+			nodeRandMap[serialSeq.GetSeqid()] = rNode
+		}
+
+		i += 1
+	}
+
+	// test list
 	listCtx, listCancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer listCancel()
 
@@ -249,7 +350,7 @@ func TestCRUD(t *testing.T) {
 	expID := uint32(1)
 
 	if err != nil{
-		tester.test.Errorf("[E] %v.SequentialList(%s) = _. %v", client, randType, err)
+		tester.test.Errorf("[E] %v.SequentialList(%s) = _. %v", tester.client, randType, err)
 	}else{
 		for {
 			sequence, err := lStr.Recv()
@@ -257,7 +358,7 @@ func TestCRUD(t *testing.T) {
 			if err == io.EOF {
 				break
 			}else if err != nil {
-				tester.test.Errorf("[E] %v.SequentialList(_) = _, %v", client, err)
+				tester.test.Errorf("[E] %v.SequentialList(_) = _, %v", tester.client, err)
 				break
 			}else {
 				isError := false
@@ -278,7 +379,7 @@ func TestCRUD(t *testing.T) {
 				}
 
 				if !isError{
-					tester.test.Logf("[I] %v.SequentialList(%s) got %v", client, randType, sequence)
+					tester.test.Logf("[I] %v.SequentialList(%s) got %v", tester.client, randType, sequence)
 				}
 			}
 
@@ -286,6 +387,7 @@ func TestCRUD(t *testing.T) {
 		}
 	}
 
+	tester.tearDown()
 }
 
 func parallelSequenceInsert(tester *SequenceTest, sType string, wg *sync.WaitGroup) {
@@ -302,17 +404,6 @@ func parallelSequenceInsert(tester *SequenceTest, sType string, wg *sync.WaitGro
 
 		wg.Done()
 	}()
-}
-
-type SequenceTest struct{
-	client pb.CDSCabinetClient
-	test *testing.T
-
-	ctx context.Context
-	cancel context.CancelFunc
-
-	parallelIDs []uint32
-	parallelMux sync.Mutex
 }
 
 func (s *SequenceTest) doCreate(sType string, sNode string) (*pb.Sequential, error){
@@ -340,7 +431,6 @@ func (s *SequenceTest) logThing(object interface{}, err error, method string) (b
 		return false, object
 	}
 }
-
 
 func (s *SequenceTest) logRejection(object interface{}, err error, method string){
 	if err == nil{
