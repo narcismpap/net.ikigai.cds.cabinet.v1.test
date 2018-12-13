@@ -120,3 +120,4 @@ func (s *CabinetTest) randomAlpha(length int) string{
 
 	return string(result)
 }
+
