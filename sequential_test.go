@@ -9,6 +9,7 @@ package main
 import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -171,7 +172,7 @@ func TestSequenceCRUD(t *testing.T) {
 	if err != nil{
 		tester.test.Logf("[I] Object %d was deleted as expected", lastSeq.GetSeqid())
 	}else{
-		tester.logThing(expectedNull, err, "SequentialGet")
+		tester.logThing(expectedNull, errors.New("object should have been deleted"), "SequentialGet")
 	}
 
 	tester.tearDown()

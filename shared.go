@@ -80,7 +80,7 @@ func (s *CabinetTest) tearDown(){
 
 func (s *CabinetTest) logThing(object interface{}, err error, method string) (bool, interface{}){
 	if err != nil{
-		s.test.Errorf("[E] %v.%s(): %v", s.client, method, err)
+		s.test.Errorf("[E] %v.%s(): %v (R: %v)", s.client, method, err, object)
 		return true, object
 	}else{
 		s.test.Logf("[I] %v.%s(): %v", s.client, method, object)
