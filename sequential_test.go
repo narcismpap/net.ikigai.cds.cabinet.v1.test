@@ -20,7 +20,7 @@ import (
 
 func TestSequenceBadSignatureCreate(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n"}) // missing Node
 	tester.logRejection(mt1, err, "SequentialCreate(Type, Node=nil)")
@@ -39,7 +39,7 @@ func TestSequenceBadSignatureCreate(t *testing.T) {
 
 func TestSequenceBadSignatureUpdate(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	// Bad Signature (Update)
 	up1, err := tester.client.SequentialUpdate(tester.ctx, &pb.Sequential{}) // missing Type, Node, Seqid
@@ -68,7 +68,7 @@ func TestSequenceBadSignatureUpdate(t *testing.T) {
 
 func TestSequenceBadSignatureDelete(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	dl1, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n"}) // missing SeqID
 	tester.logRejection(dl1, err, "SequentialDelete(Type, Seq=nil)")
@@ -87,7 +87,7 @@ func TestSequenceBadSignatureDelete(t *testing.T) {
 
 func TestSequenceBadSignatureGet(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	gr1, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{}) // Missing Type & Seq
 	tester.logRejection(gr1, err, "SequentialGet(Type=nil, Seq=nil)")
@@ -106,7 +106,7 @@ func TestSequenceBadSignatureGet(t *testing.T) {
 
 func TestSequenceBadSignatureList(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	ls1, err1 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}})
 
@@ -141,7 +141,7 @@ func TestSequenceBadSignatureList(t *testing.T) {
 
 func TestSequenceCRUD(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(4)
 
 	lastSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
 	tester.logThing(lastSeq, err, "SequentialCreate")
@@ -180,7 +180,7 @@ func TestSequenceCRUD(t *testing.T) {
 
 func TestSequenceNumberInit(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(3)
 
 	var randType = fmt.Sprintf("test_%s", tester.randomAlpha(5))
 
@@ -196,7 +196,7 @@ func TestSequenceNumberInit(t *testing.T) {
 
 func TestSequenceNumberSeries(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(uint32(float64(TestSequentialSize) * 0.15))
 
 	var randType = fmt.Sprintf("test_%s", tester.randomAlpha(5))
 	expected := uint32(1)
@@ -220,7 +220,7 @@ func TestSequenceNumberSeries(t *testing.T) {
 
 func TestSequenceConflicts(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(uint32(float64(TestParallelSize) * 0.15))
 
 	var wg sync.WaitGroup
 
@@ -229,7 +229,7 @@ func TestSequenceConflicts(t *testing.T) {
 
 	tester.test.Logf("[I] Attempting to simulate live Sequential conflicts (%d) under %s", TestParallelSize, randPar)
 
-	for pc < TestParallelSize{
+	for pc <= TestParallelSize{
 		parallelSequenceInsert(&tester, randPar, &wg)
 		pc += 1
 	}
@@ -265,7 +265,7 @@ func TestSequenceConflicts(t *testing.T) {
 
 func TestSequenceList(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup()
+	tester.setup(uint32(float64(TestSequentialSize) * 0.15)) // dynamic ctx applies just to create
 
 	var nodeRandMap = make(map[uint32]string)
 	var randType = fmt.Sprintf("test_%s", tester.randomAlpha(5))
@@ -287,7 +287,7 @@ func TestSequenceList(t *testing.T) {
 	}
 
 	// test list
-	listCtx, listCancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	listCtx, listCancel := context.WithTimeout(context.Background(), 3 * time.Second) // 3s, reads must be fast
 	defer listCancel()
 
 	listOpt := &pb.ListOptions{Mode: pb.RetrieveMode_ALL, PageSize: 100}

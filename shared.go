@@ -53,7 +53,7 @@ type CabinetTest struct{
 	parallelMux sync.Mutex
 }
 
-func (s *CabinetTest) setup(){
+func (s *CabinetTest) setup(timout uint32){
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 
@@ -65,7 +65,7 @@ func (s *CabinetTest) setup(){
 	}
 
 	s.client = pb.NewCDSCabinetClient(s.conn)
-	s.ctx, s.cancel = context.WithTimeout(context.Background(), 10 * time.Second)
+	s.ctx, s.cancel = context.WithTimeout(context.Background(), time.Duration(timout) * time.Second)
 }
 
 func (s *CabinetTest) tearDown(){

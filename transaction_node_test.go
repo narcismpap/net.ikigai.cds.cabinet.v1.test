@@ -14,7 +14,7 @@ import (
 
 func TestTransactionNodeSimpleCRUD(t *testing.T) {
 	it := CabinetTest{test: t}
-	it.setup()
+	it.setup(4)
 
 	n1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_NodeCreate{NodeCreate: &pb.Node{Type: 1, Version: 1, Id: "tmp:1"}}},
@@ -37,7 +37,7 @@ func TestTransactionNodeSimpleCRUD(t *testing.T) {
 
 func TestTransactionNodeMultiCRUD(t *testing.T) {
 	it := CabinetTest{test: t}
-	it.setup()
+	it.setup(4)
 
 	payload1 := []byte("Harry Potter")
 	payload2 := []byte("Hermione Granger")
@@ -107,6 +107,22 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 	}else{
 		it.logThing(expectedNull, errors.New("node was supposed to be deleted"), "NodeGet")
 	}
+
+	// Create and Alter in one go
+	n4 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_NodeCreate{NodeCreate: &pb.Node{Type: 1, Version: 1, Id: "tmp:5"}}},
+		{ActionId: 2, Action: &pb.TransactionAction_NodeUpdate{NodeUpdate: &pb.Node{Type: 1, Id: "tmp:5", Properties: payload4}}},
+	}
+
+	cNodeIDs := transactionRunner(&n4, &it)
+
+	el5, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: cNodeIDs["tmp:5"]})
+	it.logThing(el1, err, "NodeGet")
+
+	if err == nil && string(el5.Properties) != string(payload4){
+		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, cNodeIDs["tmp:5"], payload4, el5.Properties)
+	}
+
 
 	it.tearDown()
 }

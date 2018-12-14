@@ -13,7 +13,7 @@ import (
 
 func BenchmarkSequentialCreate(b *testing.B) {
 	tester := CabinetTest{bench: b}
-	tester.setup()
+	tester.setup(20)
 
 	for n := 0; n < b.N; n++ {
 		_, _ = tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
@@ -24,7 +24,7 @@ func BenchmarkSequentialCreate(b *testing.B) {
 
 func BenchmarkSequentialGet(b *testing.B) {
 	tester := CabinetTest{bench: b}
-	tester.setup()
+	tester.setup(20)
 
 	sq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
 
