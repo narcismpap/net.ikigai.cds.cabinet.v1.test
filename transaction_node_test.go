@@ -123,6 +123,13 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, cNodeIDs["tmp:5"], payload4, el5.Properties)
 	}
 
+	// delete other nodes
+	n5 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:1"]}}},
+		{ActionId: 2, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:5"]}}},
+	}
+
+	_ = transactionRunner(&n5, &it)
 
 	it.tearDown()
 }

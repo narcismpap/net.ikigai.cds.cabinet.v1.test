@@ -75,25 +75,18 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 	// new counter
 	c1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_CounterRegister{CounterRegister: s1}},
-		{ActionId: 2, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s1, 10)}},
+		{ActionId: 2, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s1, 10)}}, // this one is atomic
 
 		{ActionId: 3, Action: &pb.TransactionAction_CounterRegister{CounterRegister: s2}},
 	}
 
 	_ = transactionRunner(&c1, &it)
 
-	counterVal, err := it.client.CounterGet(it.ctx, s1)
-	it.logThing(counterVal, err, "CounterGet")
+	newCounterVal, err := it.client.CounterGet(it.ctx, s2)
+	it.logThing(newCounterVal, err, "CounterGet")
 
-	if counterVal.Value != int64(10){
-		it.test.Errorf("Counter expected to be %d, is %d", 10, counterVal.Value)
-	}
-
-	counterVal2, err := it.client.CounterGet(it.ctx, s2)
-	it.logThing(counterVal2, err, "CounterGet")
-
-	if counterVal2.Value != int64(0){
-		it.test.Errorf("Counter expected to be %d, is %d", 0, counterVal.Value)
+	if newCounterVal.Value != int64(0){
+		it.test.Errorf("Newly initiated counter expected to be %d, is %d", 0, newCounterVal.Value)
 	}
 
 	// do a few increments

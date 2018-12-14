@@ -32,12 +32,12 @@ const (
 
 /*
 func TestExample(t *testing.T) {
-	tester := CabinetTest{test: t}
-	tester.setup()
+	it := CabinetTest{test: t}
+	it.setup(4)
 
 
 
-	tester.tearDown()
+	it.tearDown()
 }
 */
 
