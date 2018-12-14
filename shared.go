@@ -12,6 +12,7 @@ import (
 	"crypto/rand"
 	"google.golang.org/grpc"
 	"log"
+	math_rand "math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -121,3 +122,7 @@ func (s *CabinetTest) randomAlpha(length int) string{
 	return string(result)
 }
 
+func randomInt(min int, max int) int{
+	math_rand.Seed(time.Now().UnixNano())
+	return math_rand.Intn(max - min) + min
+}

@@ -16,25 +16,28 @@ func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[str
 	stream, err := it.client.Transaction(it.ctx)
 	tempMap := make(map[uint32]string)
 	idMap := make(map[string]string)
+
 	var tMutex sync.Mutex
 
 	if err != nil {
 		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, err)
 	}
 
-	waitc := make(chan struct{})
+	wc := make(chan struct{})
 
 	go func() {
 		for {
 			in, err := stream.Recv()
 
 			if err == io.EOF {
-				close(waitc)
+				close(wc)
 				return
 			}
 
 			if err != nil {
 				it.test.Errorf("Failed to receive TransactionActionResponse in %v.Transaction(_) = _, %v", it.client, err)
+				close(wc)
+				return
 			}else {
 				it.test.Logf("For [%d] got response %v", in.ActionId, in)
 
@@ -60,7 +63,7 @@ func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[str
 	}
 
 	stream.CloseSend()
-	<-waitc
+	<-wc
 
 	return idMap
 }
