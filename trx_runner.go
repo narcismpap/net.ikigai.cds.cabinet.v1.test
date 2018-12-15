@@ -13,11 +13,10 @@ import (
 )
 
 func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string{
-	stream, err := it.client.Transaction(it.ctx)
-	tempMap := make(map[uint32]string)
-	idMap := make(map[string]string)
-
-	var tMutex sync.Mutex
+	stream, err 	:= it.client.Transaction(it.ctx)
+	tempMap 		:= make(map[uint32]string)
+	idMap 			:= make(map[string]string)
+	var tMutex 		sync.Mutex
 
 	if err != nil {
 		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, err)
@@ -62,7 +61,12 @@ func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[str
 			}
 	}
 
-	stream.CloseSend()
+	err = stream.CloseSend()
+
+	if err != nil{
+		it.test.Errorf("Failed to close stream to %v.Transaction(_) = _, %v", it.client, err)
+	}
+
 	<-wc
 
 	return idMap

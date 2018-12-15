@@ -62,7 +62,7 @@ func CounterSharedOrchestrate(t *testing.T, s1 *pb.Counter, s2 *pb.Counter) {
 
 	// must wait to hopefully flush the atomic cache. Can yield false results if requested too soon
 	if PerformAtomicReads {
-		time.Sleep(30 * time.Second)
+		time.Sleep(60 * time.Second)
 	}
 
 	it2 := CabinetTest{test: t}

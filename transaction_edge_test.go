@@ -11,12 +11,25 @@ import (
 	"testing"
 )
 
+// edgeSimpleCRUD
+// edgeComplexCRUD
+// edgeClear
+// edgeMultiClear
+
 func edgeWithPayload(e *pb.Edge, payload []byte) *pb.Edge{
 	return &pb.Edge{
 		Subject: e.Subject,
 		Predicate: e.Predicate,
 		Target: e.Target,
 		Properties: payload,
+	}
+}
+
+func edgeWithoutPayload(e *pb.Edge) *pb.Edge{
+	return &pb.Edge{
+		Subject: e.Subject,
+		Predicate: e.Predicate,
+		Target: e.Target,
 	}
 }
 
@@ -124,6 +137,103 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 	r1, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r1, err, "EdgeGet")
 	validatePayload(r1, &it, []byte(""), r1.Properties)
+
+	it.tearDown()
+}
+
+
+func TestTransactionEdgeClear(t *testing.T) {
+	it := CabinetTest{test: t}
+	it.setup(4)
+
+	edges := make([]*pb.Edge, 0)
+	trx := make([]pb.TransactionAction, 0)
+	pos := uint32(0)
+
+	// create edges
+	for pos < TestSequentialSize{
+		edge := &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESgUW", Predicate: 2018, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
+
+		edges = append(edges, edge)
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edge},
+		})
+
+		pos += 1
+	}
+
+	_ = transactionRunner(&trx, &it)
+
+	// get edges
+	pos = 0
+
+	for edgeIdx := range edges{
+		eRsp, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
+		it.logThing(eRsp, err, "EdgeGet")
+		validatePayload(eRsp, &it, edges[edgeIdx].Properties, eRsp.Properties)
+	}
+
+	// clear all edges
+	t2 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESgUW", Predicate: 2018}}},
+	}
+
+	_ = transactionRunner(&t2, &it)
+
+	// attempt to get any of the previous edges
+	for edgeIdx := range edges{
+		eNull, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
+		validateErrorNotFound(edges[edgeIdx], eNull, &it, err)
+	}
+
+	it.tearDown()
+}
+
+func TestTransactionEdgeMultiClear(t *testing.T) {
+	it := CabinetTest{test: t}
+	it.setup(4)
+
+	edges := make([]*pb.Edge, 0)
+	trx := make([]pb.TransactionAction, 0)
+	pos := uint32(0)
+
+	// create edges
+	for pos < TestSequentialSize{
+		predicate := uint32(2019)
+
+		if pos > 50{
+			predicate = uint32(2020)
+		}
+
+		edge := &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESYYY", Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
+
+		edges = append(edges, edge)
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edge},
+		})
+
+		pos += 1
+	}
+
+	_ = transactionRunner(&trx, &it)
+
+	// clear P:2019 edges
+	t2 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESYYY", Predicate: 2019}}},
+	}
+
+	_ = transactionRunner(&t2, &it)
+
+	// attempt to get any of the previous edges
+	for edgeIdx := range edges{
+		eEX, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
+
+		if edges[edgeIdx].Predicate == 2020{
+			validatePayload(eEX, &it, edges[edgeIdx].Properties, eEX.Properties)
+		}else{
+			validateErrorNotFound(edges[edgeIdx], eEX, &it, err)
+		}
+	}
 
 	it.tearDown()
 }
