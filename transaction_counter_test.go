@@ -20,12 +20,12 @@ const (
 
 func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 	s1 := &pb.Counter{
-		Counter: uint32(randomInt(1000, 65000)),
+		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyzbt1"},
 	}
 
 	s2 := &pb.Counter{
-		Counter: uint32(randomInt(1000, 65000)),
+		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyq8up"},
 	}
 
@@ -34,12 +34,12 @@ func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 
 func TestTransactionCounterEdgeSimpleCRUD(t *testing.T) {
 	s1 := &pb.Counter{
-		Counter: uint32(randomInt(1000, 65000)),
+		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 1, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}},
 	}
 
 	s2 := &pb.Counter{
-		Counter: uint32(randomInt(1000, 65000)),
+		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0p9MGb3kAl9TO0dkOkHdQv", Predicate: 2000, Target: "1EKkXz3CjX9vALVvgyayPfECq6I"}},
 	}
 

@@ -8,8 +8,6 @@ package main
 
 import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
-	"errors"
-	"fmt"
 	"testing"
 )
 
@@ -26,14 +24,8 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
 
-	payload1 := []byte("Harry Potter")
-	payload2 := []byte("Hermione Granger")
-
-	payload3 := []byte("Professor Albus Dumbledore")
-	payload4 := []byte("Professor Minerva McGonagall")
-
-	e1 := &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 100, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}
-	e2 := &pb.Edge{Subject: "1EKkY0p9MGb3kAl9TO0dkOkHdQv", Predicate: 84, Target: "1EKkXz3CjX9vALVvgyayPfECq6I"}
+	payload1, payload2, payload3, payload4 := MockRandomPayload(), MockRandomPayload(), MockRandomPayload(), MockRandomPayload()
+	e1, e2 := MockRandomEdge(), MockRandomEdge()
 
 	t1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e1, payload1)}},
@@ -51,6 +43,8 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 	it.logThing(r2, err, "EdgeGet")
 	validatePayload(r2, &it, payload3, r2.Properties)
 
+	r1, r2 = nil, nil
+
 	// update edges 1 -> 4, 2 -> 2
 	t2 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e1, payload4)}},
@@ -66,8 +60,10 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 	r4, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e2})
 	it.logThing(r4, err, "EdgeGet")
 	validatePayload(r4, &it, payload2, r4.Properties)
-	
-	// remove payload one one
+
+	r3, r4 = nil, nil
+
+	// remove payload one
 	t3 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e1, nil)}},
 	}
@@ -77,7 +73,39 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 	r5, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r5, err, "EdgeGet")
 	validatePayload(r5, &it, []byte(""), r5.Properties)
-	
+
+	r6, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e2})
+	it.logThing(r6, err, "EdgeGet")
+	validatePayload(r6, &it, payload2, r6.Properties)
+
+	r5, r6 = nil, nil
+
+	// delete one edge, check the other
+	t4 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeDelete{EdgeDelete: e1}},
+	}
+
+	_ = transactionRunner(&t4, &it)
+
+	null1, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
+	validateErrorNotFound(e1, null1, &it, err)
+
+	r7, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e2})
+	it.logThing(r7, err, "EdgeGet")
+	validatePayload(r7, &it, payload2, r7.Properties)
+
+	null1, r7 = nil, nil
+
+	// delete other edge
+	t5 := []pb.TransactionAction{
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeDelete{EdgeDelete: e2}},
+	}
+
+	_ = transactionRunner(&t5, &it)
+
+	null2, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e2})
+	validateErrorNotFound(e2, null2, &it, err)
+
 	it.tearDown()
 }
 
@@ -85,7 +113,7 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
 
-	e1 := &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbzp", Predicate: 134, Target: "1EKkY1T6y4G3Xf2jtlaM39Vuc31"}
+	e1 := MockRandomEdge()
 
 	t1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: e1}},
@@ -98,13 +126,4 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 	validatePayload(r1, &it, []byte(""), r1.Properties)
 
 	it.tearDown()
-}
-
-
-func validatePayload(ob interface{}, it *CabinetTest, expect []byte, receive []byte){
-	if string(receive) != string(expect){
-		it.logThing(ob, errors.New(fmt.Sprintf("Payload mismath. Received [%s] expected [%s]", receive, expect)), "PayloadVerify")
-	}else{
-		it.test.Logf("payload ok: %s", receive)
-	}
 }

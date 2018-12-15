@@ -9,10 +9,7 @@ package main
 import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
 	"context"
-	"crypto/rand"
 	"google.golang.org/grpc"
-	"log"
-	math_rand "math/rand"
 	"sync"
 	"testing"
 	"time"
@@ -98,31 +95,11 @@ func (s *CabinetTest) logRejection(object interface{}, err error, method string)
 }
 
 func (s *CabinetTest) randomBytes(length int) []byte{
-	var randomBytes = make([]byte, length)
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		log.Fatal("Unable to generate random bytes")
-	}
-	return randomBytes
+	return MockRandomBytes(length)
 }
 
 func (s *CabinetTest) randomAlpha(length int) string{
-	result := make([]byte, length)
-	bufferSize := int(float64(length)*1.3)
-	for i, j, randomBytes := 0, 0, []byte{}; i < length; j++ {
-		if j%bufferSize == 0 {
-			randomBytes = s.randomBytes(bufferSize)
-		}
-		if idx := int(randomBytes[j%length] & letterIdxMask); idx < len(letterBytes) {
-			result[i] = letterBytes[idx]
-			i++
-		}
-	}
-
-	return string(result)
+	return MockRandomAlpha(length)
 }
 
-func randomInt(min int, max int) int{
-	math_rand.Seed(time.Now().UnixNano())
-	return math_rand.Intn(max - min) + min
-}
+
