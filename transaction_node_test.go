@@ -11,6 +11,18 @@ import (
 	"testing"
 )
 
+func nodeWithPayload(n *pb.Node, payload []byte) *pb.Node{
+	n2 := n
+	n.Properties = payload
+	return n2
+}
+
+func nodeWithoutPayload(n *pb.Node) *pb.Node{
+	n2 := n
+	n.Properties = nil
+	return n2
+}
+
 func TestTransactionNodeSimpleCRUD(t *testing.T) {
 	itMutation := CabinetTest{test: t}
 	itMutation.setup(2)
