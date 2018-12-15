@@ -17,7 +17,8 @@ func MockRandomNode() *pb.Node{
 }
 
 func MockRandomPayload() []byte{
-	return []byte( MockRandomAlpha(30) )
+	// return MockRandomBytes(30)
+	return []byte( MockRandomAlpha(30) ) // easier to read
 }
 
 func MockRandomNodeID() string{
