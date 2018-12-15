@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	TestParallelSize = 100
+	TestParallelSize = 50
 	TestSequentialSize = 100
 	TestGRPCService = "127.0.0.1:8888"
 )

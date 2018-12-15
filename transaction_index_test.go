@@ -48,7 +48,7 @@ func TestTransactionIndexSimpleCRUD(t *testing.T) {
 		{ActionId: 5, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p2)}},
 	}
 
-	_ = transactionRunner(&t1, &it)
+	_ = CDSTransactionRunner(&t1, &it)
 
 	// check records
 	r1, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i1)})
@@ -63,7 +63,7 @@ func TestTransactionIndexSimpleCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i2)}},
 	}
 
-	_ = transactionRunner(&t2, &it)
+	_ = CDSTransactionRunner(&t2, &it)
 
 	r3, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i2)})
 	validateErrorNotFound(i2, r3, &it, err)
@@ -85,7 +85,7 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p2)}},
 	}
 
-	_ = transactionRunner(&t1, &it)
+	_ = CDSTransactionRunner(&t1, &it)
 
 	// check payloads
 	r1, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i1)})
@@ -104,7 +104,7 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p4)}},
 	}
 
-	_ = transactionRunner(&t2, &it)
+	_ = CDSTransactionRunner(&t2, &it)
 
 	r3, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i1)})
 	it.logThing(r3, err, "IndexGet")
@@ -122,7 +122,7 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 		{ActionId: 4122, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p1)}},
 	}
 
-	_ = transactionRunner(&t3, &it)
+	_ = CDSTransactionRunner(&t3, &it)
 
 	r5, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i1)})
 	validateErrorNotFound(i1, r5, &it, err)
@@ -138,7 +138,7 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i2)}},
 	}
 
-	_ = transactionRunner(&t4, &it)
+	_ = CDSTransactionRunner(&t4, &it)
 
 	r7, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*i2)})
 	validateErrorNotFound(i2, r7, &it, err)
@@ -175,7 +175,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 		pos += 1
 	}
 
-	_ = transactionRunner(&trx, &it)
+	_ = CDSTransactionRunner(&trx, &it)
 
 	// read indexes
 	for i := range indexes{
@@ -197,7 +197,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 		}
 	}
 
-	_ = transactionRunner(&dropTrx, &it)
+	_ = CDSTransactionRunner(&dropTrx, &it)
 
 	// read all indexes
 	for i := range indexes{
@@ -222,7 +222,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 		delPos += 1
 	}
 
-	_ = transactionRunner(&delTrx, &it)
+	_ = CDSTransactionRunner(&delTrx, &it)
 
 	// make sure all are removed
 	for i := range indexes{

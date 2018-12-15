@@ -33,7 +33,7 @@ func TestTransactionNodeSimpleCRUD(t *testing.T) {
 		{ActionId: 3, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: 1, Id: "tmp:1"}}},
 	}
 
-	mapIDs := transactionRunner(&n1, &itMutation)
+	mapIDs := CDSTransactionRunner(&n1, &itMutation)
 	itMutation.tearDown()
 
 	itRead := CabinetTest{test: t}
@@ -57,7 +57,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_NodeCreate{NodeCreate: &pb.Node{Type: nodeType, Version: 1, Id: "tmp:2", Properties: payload2}}},
 	}
 
-	mapIDs := transactionRunner(&n1, &it)
+	mapIDs := CDSTransactionRunner(&n1, &it)
 	it.test.Logf("mapIDs is %v", mapIDs)
 
 	el1, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:1"]})
@@ -76,7 +76,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		{ActionId: 8, Action: &pb.TransactionAction_NodeUpdate{NodeUpdate: &pb.Node{Type: nodeType, Id: mapIDs["tmp:1"], Properties: payload4}}},
 	}
 
-	_ = transactionRunner(&n2, &it)
+	_ = CDSTransactionRunner(&n2, &it)
 
 	el3, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:1"]})
 	it.logThing(el3, err, "NodeGet")
@@ -93,7 +93,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:2"]}}},
 	}
 
-	_ = transactionRunner(&n3, &it)
+	_ = CDSTransactionRunner(&n3, &it)
 
 	expectedNull, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:2"]})
 	validateErrorNotFound(mapIDs["tmp:2"], expectedNull, &it, err)
@@ -104,7 +104,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_NodeUpdate{NodeUpdate: &pb.Node{Type: 1, Id: "tmp:5", Properties: payload4}}},
 	}
 
-	cNodeIDs := transactionRunner(&n4, &it)
+	cNodeIDs := CDSTransactionRunner(&n4, &it)
 
 	el5, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: cNodeIDs["tmp:5"]})
 	it.logThing(el1, err, "NodeGet")
@@ -116,7 +116,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:5"]}}},
 	}
 
-	_ = transactionRunner(&n5, &it)
+	_ = CDSTransactionRunner(&n5, &it)
 
 	it.tearDown()
 }

@@ -80,7 +80,7 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 		{ActionId: 3, Action: &pb.TransactionAction_CounterRegister{CounterRegister: s2}},
 	}
 
-	_ = transactionRunner(&c1, &it)
+	_ = CDSTransactionRunner(&c1, &it)
 
 	newCounterVal, err := it.client.CounterGet(it.ctx, s2)
 	it.logThing(newCounterVal, err, "CounterGet")
@@ -98,7 +98,7 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 		{ActionId: 4, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s1, -7)}},
 	}
 
-	_ = transactionRunner(&c2, &it)
+	_ = CDSTransactionRunner(&c2, &it)
 
 	c3 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s2, 12)}},
@@ -108,7 +108,7 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 		{ActionId: 4, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s2, -33)}},
 	}
 
-	_ = transactionRunner(&c3, &it)
+	_ = CDSTransactionRunner(&c3, &it)
 
 	c4 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s2, 3)}},
@@ -118,7 +118,7 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 		{ActionId: 4, Action: &pb.TransactionAction_CounterIncrement{CounterIncrement: counterWithValue(s1, 1)}},
 	}
 
-	_ = transactionRunner(&c4, &it)
+	_ = CDSTransactionRunner(&c4, &it)
 
 }
 
@@ -159,7 +159,7 @@ func CounterSharedS2(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 		{ActionId: 2, Action: &pb.TransactionAction_CounterDelete{CounterDelete: s2}},
 	}
 
-	_ = transactionRunner(&c5, &it)
+	_ = CDSTransactionRunner(&c5, &it)
 
 	// attempt to read counters again
 	c1Null, err1 := it.client.CounterGet(it.ctx, s1)

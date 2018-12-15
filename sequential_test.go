@@ -220,7 +220,7 @@ func TestSequenceNumberSeries(t *testing.T) {
 
 func TestSequenceConflicts(t *testing.T) {
 	tester := CabinetTest{test: t}
-	tester.setup(uint32(float64(TestParallelSize) * 0.15))
+	tester.setup(10)
 
 	var wg sync.WaitGroup
 

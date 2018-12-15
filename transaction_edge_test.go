@@ -45,7 +45,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e2, payload3)}},
 	}
 
-	_ = transactionRunner(&t1, &it)
+	_ = CDSTransactionRunner(&t1, &it)
 
 	// check edges
 	r1, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
@@ -64,7 +64,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 		{ActionId: 2, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e2, payload2)}},
 	}
 
-	_ = transactionRunner(&t2, &it)
+	_ = CDSTransactionRunner(&t2, &it)
 
 	r3, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r3, err, "EdgeGet")
@@ -81,7 +81,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edgeWithPayload(e1, nil)}},
 	}
 
-	_ = transactionRunner(&t3, &it)
+	_ = CDSTransactionRunner(&t3, &it)
 	
 	r5, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r5, err, "EdgeGet")
@@ -98,7 +98,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeDelete{EdgeDelete: e1}},
 	}
 
-	_ = transactionRunner(&t4, &it)
+	_ = CDSTransactionRunner(&t4, &it)
 
 	null1, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	validateErrorNotFound(e1, null1, &it, err)
@@ -114,7 +114,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeDelete{EdgeDelete: e2}},
 	}
 
-	_ = transactionRunner(&t5, &it)
+	_ = CDSTransactionRunner(&t5, &it)
 
 	null2, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e2})
 	validateErrorNotFound(e2, null2, &it, err)
@@ -132,7 +132,7 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: e1}},
 	}
 
-	_ = transactionRunner(&t1, &it)
+	_ = CDSTransactionRunner(&t1, &it)
 
 	r1, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r1, err, "EdgeGet")
@@ -162,7 +162,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 		pos += 1
 	}
 
-	_ = transactionRunner(&trx, &it)
+	_ = CDSTransactionRunner(&trx, &it)
 
 	// get edges
 	pos = 0
@@ -178,7 +178,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESgUW", Predicate: 2018}}},
 	}
 
-	_ = transactionRunner(&t2, &it)
+	_ = CDSTransactionRunner(&t2, &it)
 
 	// attempt to get any of the previous edges
 	for edgeIdx := range edges{
@@ -215,14 +215,14 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 		pos += 1
 	}
 
-	_ = transactionRunner(&trx, &it)
+	_ = CDSTransactionRunner(&trx, &it)
 
 	// clear P:2019 edges
 	t2 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESYYY", Predicate: 2019}}},
 	}
 
-	_ = transactionRunner(&t2, &it)
+	_ = CDSTransactionRunner(&t2, &it)
 
 	// attempt to get any of the previous edges
 	for edgeIdx := range edges{

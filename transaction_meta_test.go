@@ -59,7 +59,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 		{ActionId: 2, Action: &pb.TransactionAction_MetaUpdate{MetaUpdate: metaWithPayload(m2, p2)}},
 	}
 
-	_ = transactionRunner(&n1, it)
+	_ = CDSTransactionRunner(&n1, it)
 
 	// check payload
 	r1, err := it.client.MetaGet(it.ctx, m1)
@@ -77,7 +77,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 		{ActionId: 1, Action: &pb.TransactionAction_MetaDelete{MetaDelete: metaWithPayload(m1, p1)}},
 	}
 
-	_ = transactionRunner(&n2, it)
+	_ = CDSTransactionRunner(&n2, it)
 
 	r3, err := it.client.MetaGet(it.ctx, m1)
 	validateErrorNotFound(m1, r3, it, err)
@@ -106,7 +106,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 		pos += 1
 	}
 
-	_ = transactionRunner(&trx, it)
+	_ = CDSTransactionRunner(&trx, it)
 
 	// check results
 	for i := range metas{
@@ -120,7 +120,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 		{ActionId: 1, Action: &pb.TransactionAction_MetaClear{MetaClear: m2}},
 	}
 
-	_ = transactionRunner(&n4, it)
+	_ = CDSTransactionRunner(&n4, it)
 
 	// verify cleared batches
 	for i := range metas{

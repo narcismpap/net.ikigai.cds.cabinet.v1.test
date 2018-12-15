@@ -12,7 +12,7 @@ import (
 	"sync"
 )
 
-func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string{
+func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string{
 	stream, err 	:= it.client.Transaction(it.ctx)
 	tempMap 		:= make(map[uint32]string)
 	idMap 			:= make(map[string]string)
