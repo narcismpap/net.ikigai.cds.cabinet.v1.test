@@ -8,13 +8,12 @@ package main
 
 import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
-	"errors"
 	"testing"
 )
 
 func TestTransactionNodeSimpleCRUD(t *testing.T) {
-	it := CabinetTest{test: t}
-	it.setup(4)
+	itMutation := CabinetTest{test: t}
+	itMutation.setup(2)
 
 	n1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_NodeCreate{NodeCreate: &pb.Node{Type: 1, Version: 1, Id: "tmp:1"}}},
@@ -22,29 +21,23 @@ func TestTransactionNodeSimpleCRUD(t *testing.T) {
 		{ActionId: 3, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: 1, Id: "tmp:1"}}},
 	}
 
-	mapIDs := transactionRunner(&n1, &it)
+	mapIDs := transactionRunner(&n1, &itMutation)
+	itMutation.tearDown()
 
-	expectedNull, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:1"]})
+	itRead := CabinetTest{test: t}
+	itRead.setup(2)
 
-	if err != nil{
-		it.test.Logf("[I] Node %s was deleted as expected", mapIDs["tmp:1"])
-	}else{
-		it.logThing(expectedNull, errors.New("node was supposed to be deleted"), "NodeGet")
-	}
+	expectedNull, err := itRead.client.NodeGet(itRead.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:1"]})
+	validateErrorNotFound(mapIDs["tmp:1"], expectedNull, &itRead, err)
 
-	it.tearDown()
+	itRead.tearDown()
 }
 
 func TestTransactionNodeMultiCRUD(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
 
-	payload1 := []byte("Harry Potter")
-	payload2 := []byte("Hermione Granger")
-
-	payload3 := []byte("Professor Albus Dumbledore")
-	payload4 := []byte("Professor Minerva McGonagall")
-
+	payload1, payload2, payload3, payload4 := MockRandomPayload(), MockRandomPayload(), MockRandomPayload(), MockRandomPayload()
 	nodeType := uint32(1)
 
 	n1 := []pb.TransactionAction{
@@ -57,17 +50,11 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 
 	el1, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:1"]})
 	it.logThing(el1, err, "NodeGet")
-
-	if err == nil && string(el1.Properties) != string(payload1){
-		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, mapIDs["tmp:1"], payload1, el1.Properties)
-	}
+	validatePayload(el1, &it, payload1, el1.Properties)
 
 	el2, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:2"]})
 	it.logThing(el2, err, "NodeGet")
-
-	if err == nil && string(el2.Properties) != string(payload2){
-		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, mapIDs["tmp:2"], payload1, el1.Properties)
-	}
+	validatePayload(el2, &it, payload2, el2.Properties)
 
 	el1, el2 = nil, nil
 
@@ -81,17 +68,13 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 
 	el3, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:1"]})
 	it.logThing(el3, err, "NodeGet")
-
-	if err == nil && string(el3.Properties) != string(payload4){
-		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, mapIDs["tmp:1"], payload4, el3.Properties)
-	}
+	validatePayload(el3, &it, payload4, el3.Properties)
 
 	el4, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: mapIDs["tmp:2"]})
 	it.logThing(el4, err, "NodeGet")
+	validatePayload(el4, &it, payload3, el4.Properties)
 
-	if err == nil && string(el4.Properties) != string(payload3){
-		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, mapIDs["tmp:2"], payload3, el4.Properties)
-	}
+	el3, el4 = nil, nil
 
 	// delete one of the payloads
 	n3 := []pb.TransactionAction{
@@ -101,12 +84,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 	_ = transactionRunner(&n3, &it)
 
 	expectedNull, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:2"]})
-
-	if err != nil{
-		it.test.Logf("[I] Node %s was deleted as expected", mapIDs["tmp:1"])
-	}else{
-		it.logThing(expectedNull, errors.New("node was supposed to be deleted"), "NodeGet")
-	}
+	validateErrorNotFound(mapIDs["tmp:2"], expectedNull, &it, err)
 
 	// Create and Alter in one go
 	n4 := []pb.TransactionAction{
@@ -118,10 +96,7 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 
 	el5, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: nodeType, Id: cNodeIDs["tmp:5"]})
 	it.logThing(el1, err, "NodeGet")
-
-	if err == nil && string(el5.Properties) != string(payload4){
-		it.test.Errorf("NodeGet(%d, %s) Unexpected payload, wanted [%v] got [%v]", nodeType, cNodeIDs["tmp:5"], payload4, el5.Properties)
-	}
+	validatePayload(el5, &it, payload4, el5.Properties)
 
 	// delete other nodes
 	n5 := []pb.TransactionAction{
