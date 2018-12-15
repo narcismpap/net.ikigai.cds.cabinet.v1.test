@@ -34,11 +34,11 @@ func transactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[str
 			}
 
 			if err != nil {
-				it.test.Errorf("Failed to receive TransactionActionResponse in %v.Transaction(_) = _, %v", it.client, err)
+				it.test.Errorf("TransactionActionResponse(_) = _, %v", err)
 				close(wc)
 				return
 			}else {
-				it.test.Logf("For [%d] got response %v", in.ActionId, in)
+				it.test.Logf("TransactionActionResponse(%d) = %v", in.ActionId, in)
 
 				switch tReq := in.Response.(type) {
 				case *pb.TransactionActionResponse_NodeCreate:
