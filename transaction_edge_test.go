@@ -150,9 +150,11 @@ func TestTransactionEdgeClear(t *testing.T) {
 	trx := make([]pb.TransactionAction, 0)
 	pos := uint32(0)
 
+	edgeSubject := MockRandomNodeID()
+
 	// create edges
 	for pos < TestSequentialSize{
-		edge := &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESgUW", Predicate: 2018, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
+		edge := &pb.Edge{Subject: edgeSubject, Predicate: 2018, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
 
 		edges = append(edges, edge)
 		trx = append(trx, pb.TransactionAction{
@@ -175,7 +177,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 
 	// clear all edges
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESgUW", Predicate: 2018}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: 2018, Target: "*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)
@@ -197,6 +199,8 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 	trx := make([]pb.TransactionAction, 0)
 	pos := uint32(0)
 
+	edgeSubject := MockRandomNodeID()
+
 	// create edges
 	for pos < TestSequentialSize{
 		predicate := uint32(2019)
@@ -205,7 +209,7 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 			predicate = uint32(2020)
 		}
 
-		edge := &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESYYY", Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
+		edge := &pb.Edge{Subject: edgeSubject, Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
 
 		edges = append(edges, edge)
 		trx = append(trx, pb.TransactionAction{
@@ -219,7 +223,7 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 
 	// clear P:2019 edges
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: "0EKkESgUWIlAgoqLguCtqEESYYY", Predicate: 2019}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: 2019, Target:"*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)

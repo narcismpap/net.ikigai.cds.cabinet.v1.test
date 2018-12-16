@@ -113,11 +113,10 @@ func TestTransactionNodeMultiCRUD(t *testing.T) {
 	// delete other nodes
 	n5 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:1"]}}},
-		{ActionId: 2, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: mapIDs["tmp:5"]}}},
+		{ActionId: 2, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: nodeType, Id: cNodeIDs["tmp:5"]}}},
 	}
 
 	_ = CDSTransactionRunner(&n5, &it)
 
 	it.tearDown()
 }
-

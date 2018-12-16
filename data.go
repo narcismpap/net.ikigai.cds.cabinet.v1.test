@@ -4,6 +4,7 @@ import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
 	"crypto/rand"
 	"github.com/gofrs/uuid"
+	"github.com/segmentio/ksuid"
 	"log"
 	mathrand "math/rand"
 	"time"
@@ -23,7 +24,12 @@ func MockRandomPayload() []byte{
 }
 
 func MockRandomNodeID() string{
-	return "0EKk" + MockRandomAlpha(23)
+	newIDBytes, err := ksuid.New().MarshalText()
+	if err != nil{
+		panic(err)
+	}
+
+	return string(newIDBytes)
 }
 
 func MockRandomUUID() string{
