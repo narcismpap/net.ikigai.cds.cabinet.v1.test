@@ -86,7 +86,7 @@ func TestSequenceBadSignatureList(t *testing.T) {
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
-	ls1, err1 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}})
+	ls1, err1 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}, IncludeUuid:true})
 
 	if err1 != nil{
 		tester.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err1)
@@ -100,7 +100,7 @@ func TestSequenceBadSignatureList(t *testing.T) {
 		}
 	}
 
-	ls2, err2 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.ListRange_ALL}})
+	ls2, err2 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.ListRange_ALL}, IncludeUuid:true})
 
 	if err2 != nil{
 		tester.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err2)
@@ -322,7 +322,7 @@ func TestSequenceConflicts(t *testing.T) {
 
 func TestSequenceList(t *testing.T) {
 	t.Parallel()
-	
+
 	tester := CabinetTest{test: t}
 	tester.setup(uint32(float64(TestSequentialSize) * 0.15)) // dynamic ctx applies just to create
 
@@ -350,7 +350,9 @@ func TestSequenceList(t *testing.T) {
 	defer listCancel()
 
 	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: 100}
-	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{Type: randType, Opt: listOpt})
+	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{
+		Type: randType, Opt: listOpt, IncludeUuid: true, IncludeSeqid: true,
+	})
 	expID := uint32(1)
 
 	if err != nil{
