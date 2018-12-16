@@ -31,6 +31,8 @@ func IndexWithValuePayload(i pb.Index, value string, payload []byte) (r *pb.Inde
 }
 
 func TestTransactionIndexSimpleCRUD(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -72,6 +74,8 @@ func TestTransactionIndexSimpleCRUD(t *testing.T) {
 }
 
 func TestTransactionIndexComplexCRUD(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -147,6 +151,8 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 }
 
 func TestTransactionIndexBatch(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 

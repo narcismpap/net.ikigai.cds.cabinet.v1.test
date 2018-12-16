@@ -19,6 +19,8 @@ const (
 )
 
 func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
+	t.Parallel()
+
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyzbt1"},
@@ -33,6 +35,8 @@ func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 }
 
 func TestTransactionCounterEdgeSimpleCRUD(t *testing.T) {
+	t.Parallel()
+
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 1, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}},

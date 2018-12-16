@@ -18,6 +18,8 @@ import (
 )
 
 func TestSequenceBadSignatureCreate(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -37,6 +39,8 @@ func TestSequenceBadSignatureCreate(t *testing.T) {
 }
 
 func TestSequenceBadSignatureDelete(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -56,6 +60,8 @@ func TestSequenceBadSignatureDelete(t *testing.T) {
 }
 
 func TestSequenceBadSignatureGet(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -75,6 +81,8 @@ func TestSequenceBadSignatureGet(t *testing.T) {
 }
 
 func TestSequenceBadSignatureList(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -92,7 +100,7 @@ func TestSequenceBadSignatureList(t *testing.T) {
 		}
 	}
 
-	ls2, err2 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.RetrieveMode_ALL}})
+	ls2, err2 := tester.client.SequentialList(tester.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.ListRange_ALL}})
 
 	if err2 != nil{
 		tester.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err2)
@@ -110,6 +118,8 @@ func TestSequenceBadSignatureList(t *testing.T) {
 }
 
 func TestSequenceRepeatUUID(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -135,6 +145,8 @@ func TestSequenceRepeatUUID(t *testing.T) {
 }
 
 func TestSequenceRepeatClearUUID(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -173,6 +185,8 @@ func TestSequenceRepeatClearUUID(t *testing.T) {
 }
 
 func TestSequenceCRUD(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
@@ -216,6 +230,8 @@ func TestSequenceCRUD(t *testing.T) {
 }
 
 func TestSequenceNumberInit(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(3)
 
@@ -232,6 +248,8 @@ func TestSequenceNumberInit(t *testing.T) {
 }
 
 func TestSequenceNumberSeries(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(uint32(float64(TestSequentialSize) * 0.15))
 
@@ -256,6 +274,8 @@ func TestSequenceNumberSeries(t *testing.T) {
 }
 
 func TestSequenceConflicts(t *testing.T) {
+	t.Parallel()
+
 	tester := CabinetTest{test: t}
 	tester.setup(10)
 
@@ -301,6 +321,8 @@ func TestSequenceConflicts(t *testing.T) {
 }
 
 func TestSequenceList(t *testing.T) {
+	t.Parallel()
+	
 	tester := CabinetTest{test: t}
 	tester.setup(uint32(float64(TestSequentialSize) * 0.15)) // dynamic ctx applies just to create
 
@@ -327,7 +349,7 @@ func TestSequenceList(t *testing.T) {
 	listCtx, listCancel := context.WithTimeout(context.Background(), 3 * time.Second) // 3s, reads must be fast
 	defer listCancel()
 
-	listOpt := &pb.ListOptions{Mode: pb.RetrieveMode_ALL, PageSize: 100}
+	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: 100}
 	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{Type: randType, Opt: listOpt})
 	expID := uint32(1)
 

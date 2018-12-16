@@ -34,6 +34,8 @@ func edgeWithoutPayload(e *pb.Edge) *pb.Edge{
 }
 
 func TestTransactionEdgeComplexCRUD(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -123,6 +125,8 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 }
 
 func TestTransactionEdgeEmptyPayload(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -143,6 +147,8 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 
 
 func TestTransactionEdgeClear(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -192,6 +198,8 @@ func TestTransactionEdgeClear(t *testing.T) {
 }
 
 func TestTransactionEdgeMultiClear(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 

@@ -24,6 +24,8 @@ func nodeWithoutPayload(n *pb.Node) *pb.Node{
 }
 
 func TestTransactionNodeSimpleCRUD(t *testing.T) {
+	t.Parallel()
+
 	itMutation := CabinetTest{test: t}
 	itMutation.setup(2)
 
@@ -46,6 +48,8 @@ func TestTransactionNodeSimpleCRUD(t *testing.T) {
 }
 
 func TestTransactionNodeMultiCRUD(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
