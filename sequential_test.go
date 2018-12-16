@@ -109,11 +109,74 @@ func TestSequenceBadSignatureList(t *testing.T) {
 	tester.tearDown()
 }
 
+func TestSequenceRepeatUUID(t *testing.T) {
+	tester := CabinetTest{test: t}
+	tester.setup(4)
+
+	seqUUID := MockRandomUUID()
+
+	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(mt1, err, "SequentialCreate(Type, UUID)")
+
+	mt2, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logRejection(mt2, err, "SequentialCreate(Type, UUID)")
+
+	mt3, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logRejection(mt3, err, "SequentialCreate(Type, UUID)")
+
+	valByUUID, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(valByUUID, err, "SequentialGetByUUID")
+
+	if valByUUID.Seqid != mt1.Seqid{
+		tester.test.Errorf("SeqID mismatch, expected %d got %d", mt1.Seqid, valByUUID.Seqid)
+	}
+
+	tester.tearDown()
+}
+
+func TestSequenceRepeatClearUUID(t *testing.T) {
+	tester := CabinetTest{test: t}
+	tester.setup(4)
+
+	seqUUID := MockRandomUUID()
+
+	// seq1
+	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(mt1, err, "SequentialCreate(Type, UUID)")
+
+	mt2, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logRejection(mt2, err, "SequentialCreate(Type, UUID)")
+
+	mt3, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(mt3, err, "SequentialDelete(Type, UUID)")
+
+	//seq2
+	mt4, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(mt4, err, "SequentialCreate(Type, UUID)")
+
+	mt5, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logRejection(mt5, err, "SequentialCreate(Type, UUID)")
+
+	// check record
+	valByUUID, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
+	tester.logThing(valByUUID, err, "SequentialGetByUUID")
+
+	if valByUUID.Seqid != mt4.Seqid{
+		tester.test.Errorf("SeqID mismatch, expected %d got %d", mt4.Seqid, valByUUID.Seqid)
+	}
+
+	// check deleted record
+	nullBySeqID, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: mt1.Seqid})
+	validateErrorNotFound(mt1.Seqid, nullBySeqID, &tester, err)
+
+	tester.tearDown()
+}
+
 func TestSequenceCRUD(t *testing.T) {
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
-	seqUUID := "460EA89D-5CDD-460A-A8C9-35F368963C05"
+	seqUUID := MockRandomUUID()
 
 	// new seq
 	lastSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})

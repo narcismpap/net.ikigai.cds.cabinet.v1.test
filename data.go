@@ -3,6 +3,7 @@ package main
 import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
 	"crypto/rand"
+	"github.com/gofrs/uuid"
 	"log"
 	mathrand "math/rand"
 	"time"
@@ -26,7 +27,12 @@ func MockRandomNodeID() string{
 }
 
 func MockRandomUUID() string{
-	return "51656B4B-B83C-41CB-A71F-E49DD9BA089A"
+	newUUID, err := uuid.NewV4()
+	if err != nil{
+		panic(err)
+	}
+
+	return newUUID.String()
 }
 
 func MockRandomBytes(length int) []byte{
