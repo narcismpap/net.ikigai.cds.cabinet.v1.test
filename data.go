@@ -25,6 +25,10 @@ func MockRandomNodeID() string{
 	return "0EKk" + MockRandomAlpha(23)
 }
 
+func MockRandomUUID() string{
+	return "51656B4B-B83C-41CB-A71F-E49DD9BA089A"
+}
+
 func MockRandomBytes(length int) []byte{
 	var randomBytes = make([]byte, length)
 	_, err := rand.Read(randomBytes)

@@ -16,7 +16,7 @@ func BenchmarkSequentialCreate(b *testing.B) {
 	tester.setup(20)
 
 	for n := 0; n < b.N; n++ {
-		_, _ = tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
+		_, _ = tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
 	}
 
 	tester.tearDown()
@@ -26,7 +26,7 @@ func BenchmarkSequentialGet(b *testing.B) {
 	tester := CabinetTest{bench: b}
 	tester.setup(20)
 
-	sq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Node: "XXXXX"})
+	sq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
 
 	if err != nil{
 		b.Fatalf("Unable to setup: %v", err)
