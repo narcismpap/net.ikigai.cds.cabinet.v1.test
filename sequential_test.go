@@ -21,17 +21,17 @@ func TestSequenceBadSignatureCreate(t *testing.T) {
 	tester := CabinetTest{test: t}
 	tester.setup(4)
 
-	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n"}) // missing Node
-	tester.logRejection(mt1, err, "SequentialCreate(Type, Node=nil)")
+	mt1, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n"}) // missing UUID
+	tester.logRejection(mt1, err, "SequentialCreate(Type, UUID=nil)")
 
 	mt2, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Uuid: MockRandomUUID()}) // missing Type
-	tester.logRejection(mt2, err, "SequentialCreate(Type=nil, Node)")
+	tester.logRejection(mt2, err, "SequentialCreate(Type=nil, UUID)")
 
-	mt3, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{}) // missing Type & None
-	tester.logRejection(mt3, err, "SequentialCreate(Type=nil, Node=nil)")
+	mt3, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{}) // missing Type & UUID
+	tester.logRejection(mt3, err, "SequentialCreate(Type=nil, UUID=nil)")
 
 	mt4, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Uuid: MockRandomUUID(), Type: "n", Seqid: uint32(100)}) // Unexpected Seqid
-	tester.logRejection(mt4, err, "SequentialCreate(Type, Node, +Seqid)")
+	tester.logRejection(mt4, err, "SequentialCreate(Type, UUID, +Seqid)")
 
 	tester.tearDown()
 }
@@ -49,8 +49,8 @@ func TestSequenceBadSignatureDelete(t *testing.T) {
 	dl3, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{}) // missing Type & SeqId
 	tester.logRejection(dl3, err, "SequentialDelete(Type=nil, Seq=nil)")
 
-	dl4, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Uuid: MockRandomUUID()}) // extra Node
-	tester.logRejection(dl4, err, "SequentialDelete(Type, Seq, +Node)")
+	dl4, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Uuid: MockRandomUUID()}) // extra UUID
+	tester.logRejection(dl4, err, "SequentialDelete(Type, Seq, +UUID)")
 
 	tester.tearDown()
 }
@@ -68,8 +68,8 @@ func TestSequenceBadSignatureGet(t *testing.T) {
 	gr3, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n"}) // Missing Seq
 	tester.logRejection(gr3, err, "SequentialGet(Type, Seq=nil)")
 
-	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Uuid: MockRandomUUID()}) // Extra Node
-	tester.logRejection(gr4, err, "SequentialGet(Type, Seq, +Node)")
+	gr4, err := tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: uint32(100), Uuid: MockRandomUUID()}) // Extra UUID
+	tester.logRejection(gr4, err, "SequentialGet(Type, Seq, +UUID)")
 
 	tester.tearDown()
 }
@@ -134,7 +134,7 @@ func TestSequenceCRUD(t *testing.T) {
 		tester.test.Errorf("SequentialGet(UUID & SeqID): results mismatch, [%v] and [%v]", valByUUID, valBySeqID)
 	}
 
-	// remove Node
+	// remove seq
 	delStatus, err := tester.client.SequentialDelete(tester.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
 	tester.logThing(delStatus, err, "SequentialDelete")
 
@@ -176,9 +176,9 @@ func TestSequenceNumberSeries(t *testing.T) {
 	expected := uint32(1)
 
 	for expected < TestSequentialSize{
-		var rNode = MockRandomUUID()
+		var rUUID = MockRandomUUID()
 
-		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Uuid: rNode})
+		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Uuid: rUUID})
 		tester.logThing(serialSeq, err, fmt.Sprintf("%d * SequentialCreate(%s)", expected, randType) )
 
 		if err == nil && serialSeq.GetSeqid() != expected{
@@ -241,20 +241,20 @@ func TestSequenceList(t *testing.T) {
 	tester := CabinetTest{test: t}
 	tester.setup(uint32(float64(TestSequentialSize) * 0.15)) // dynamic ctx applies just to create
 
-	var nodeRandMap = make(map[uint32]string)
+	var UUIDMap = make(map[uint32]string)
 	var randType = fmt.Sprintf("test_%s", tester.randomAlpha(5))
 	var i = 0
 
-	// create nodes
+	// request new seq
 	for i < TestSequentialSize{
-		var rNode = MockRandomUUID()
-		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Uuid: rNode})
+		var rUUID = MockRandomUUID()
+		serialSeq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: randType, Uuid: rUUID})
 
 		if err != nil{
 			tester.test.Errorf("[E] Unexpected %v.SequentialCreate(%s) = _. %v", tester.client, randType, err)
 			break
 		}else{
-			nodeRandMap[serialSeq.GetSeqid()] = rNode
+			UUIDMap[serialSeq.GetSeqid()] = rUUID
 		}
 
 		i += 1
@@ -287,8 +287,8 @@ func TestSequenceList(t *testing.T) {
 					isError = true
 				}
 
-				if sequence.GetUuid() != nodeRandMap[sequence.GetSeqid()] {
-					tester.test.Errorf("[E] sequence.node got %s expected %s", sequence.GetUuid(), nodeRandMap[sequence.GetSeqid()])
+				if sequence.GetUuid() != UUIDMap[sequence.GetSeqid()] {
+					tester.test.Errorf("[E] sequence.UUID got %s expected %s", sequence.GetUuid(), UUIDMap[sequence.GetSeqid()])
 					isError = true
 				}
 
