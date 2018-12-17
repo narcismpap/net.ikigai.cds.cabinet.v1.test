@@ -40,6 +40,7 @@ func TestNodeCreateList(t *testing.T) {
 
 	mapIDs := CDSTransactionRunner(&trx, &it)
 	rMap := make(map[string]string)
+	nReceived := uint32(0)
 
 	for tmp, aID := range mapIDs{
 		rMap[aID] = tmp
@@ -47,8 +48,10 @@ func TestNodeCreateList(t *testing.T) {
 
 	// check list
 	lStr, err := it.client.NodeList(it.ctx, &pb.NodeListRequest{
-		NodeType: nType, IncludeType: true, IncludeId: true, IncludeProp: true, Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: 100,
+		NodeType: nType,
+		IncludeType: true, IncludeId: true, IncludeProp: true,
+		Opt: &pb.ListOptions{
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
 	},})
 
 	if err != nil{
@@ -60,17 +63,18 @@ func TestNodeCreateList(t *testing.T) {
 			if err == io.EOF {
 				break
 			}else if err != nil {
-				it.test.Errorf("[E] %v.SequentialList(_) = _, %v", it.client, err)
+				it.test.Errorf("[E] %v.NodeList(_) = _, %v", it.client, err)
 				break
 			}else {
 				tmpPos := rMap[node.Id]
+				nReceived += 1
 
 				if node.Type != nType {
 					it.test.Errorf("[E] node.type got %d expected %d", node.Type, nType)
 				}else if node.Id != mapIDs[rMap[node.Id]] {
 					it.test.Errorf("[E] node.id got %s expected %s", node.Id, mapIDs[rMap[node.Id]])
 				}else if string(node.Properties) != string(nPayloads[tmpPos]) {
-					it.test.Errorf("[E] sequence.prop got %v expected %v", string(node.Properties), string(nPayloads[tmpPos]))
+					it.test.Errorf("[E] node.properties got %v expected %v", string(node.Properties), string(nPayloads[tmpPos]))
 				}else{
 					it.test.Logf("[I] %v.NodeList(%d) got %v", it.client, nType, node)
 				}
@@ -78,17 +82,47 @@ func TestNodeCreateList(t *testing.T) {
 		}
 	}
 
+	if nReceived != pos{
+		it.test.Errorf("[E] Received %d nodes, expected %d results", nReceived, pos)
+	}
+
 	// clear records
 	trxDelete := make([]pb.TransactionAction, 0)
+	dPos := uint32(0)
 
 	for _, nID := range mapIDs{
 		trxDelete = append(trxDelete, pb.TransactionAction{
-			ActionId: pos, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{
+			ActionId: dPos, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{
 				Type: nType, Id: nID,
 			}}},)
+		dPos += 1
 	}
 
-	_ = CDSTransactionRunner(&trx, &it)
+	_ = CDSTransactionRunner(&trxDelete, &it)
+
+	// try loading records again
+	nullList, err := it.client.NodeList(it.ctx, &pb.NodeListRequest{
+		NodeType: nType,
+		IncludeType: true, IncludeId: true, IncludeProp: true,
+		Opt: &pb.ListOptions{
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
+		},})
+
+	if err != nil{
+		it.test.Errorf("[E] %v.NodeList(%d) = _. %v", it.client, nType, err)
+	}else{
+		for {
+			node, err := nullList.Recv()
+
+			if err == io.EOF {
+				break
+			}else if err != nil {
+				it.test.Errorf("[E] %v.NodeList(_) = _, %v", it.client, err)
+				break
+			}else {
+				it.test.Errorf("[E] Unexpected node received: %v", node)
+		}
+	}}
 
 	it.tearDown()
 }
