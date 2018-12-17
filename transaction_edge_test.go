@@ -209,12 +209,15 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 
 	edgeSubject := MockRandomNodeID()
 
+	p1 := uint32(MockRandomInt(10, 10000))
+	p2 := uint32(MockRandomInt(10, 10000))
+
 	// create edges
 	for pos < TestSequentialSize{
-		predicate := uint32(2019)
+		predicate := uint32(p1)
 
 		if pos > 50{
-			predicate = uint32(2020)
+			predicate = uint32(p2)
 		}
 
 		edge := &pb.Edge{Subject: edgeSubject, Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
@@ -229,9 +232,9 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 
 	_ = CDSTransactionRunner(&trx, &it)
 
-	// clear P:2019 edges
+	// clear P1 edges
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: 2019, Target:"*"}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: p1, Target:"*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)
@@ -240,7 +243,7 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 	for edgeIdx := range edges{
 		eEX, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
 
-		if edges[edgeIdx].Predicate == 2020{
+		if edges[edgeIdx].Predicate == p2{
 			validatePayload(eEX, &it, edges[edgeIdx].Properties, eEX.Properties)
 		}else{
 			validateErrorNotFound(edges[edgeIdx], eEX, &it, err)

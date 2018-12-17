@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func TestMetaEdgeCreateListAll(t *testing.T) {
+func TestMetaNodeCreateListAll(t *testing.T) {
 	t.Parallel()
 
 	it := CabinetTest{test: t}
@@ -27,7 +27,7 @@ func TestMetaEdgeCreateListAll(t *testing.T) {
 	it.tearDown()
 }
 
-func TestMetaNodeCreateListAll(t *testing.T) {
+func TestMetaEdgeCreateListAll(t *testing.T) {
 	t.Parallel()
 
 	it := CabinetTest{test: t}

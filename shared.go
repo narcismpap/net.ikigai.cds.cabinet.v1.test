@@ -66,6 +66,8 @@ func (s *CabinetTest) setup(timout uint32){
 
 	s.client = pb.NewCDSCabinetClient(s.conn)
 	s.ctx, s.cancel = context.WithTimeout(context.Background(), time.Duration(timout) * time.Second)
+
+	// s.test.Parallel()
 }
 
 func (s *CabinetTest) tearDown(){
