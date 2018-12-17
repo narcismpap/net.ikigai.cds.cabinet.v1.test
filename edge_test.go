@@ -12,7 +12,9 @@ import (
 	"testing"
 )
 
-func TestEdgeCreateList(t *testing.T) {
+func TestEdgeCreateListAll(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 

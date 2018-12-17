@@ -13,7 +13,9 @@ import (
 	"testing"
 )
 
-func TestNodeCreateList(t *testing.T) {
+func TestNodeCreateListAll(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 
