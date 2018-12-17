@@ -12,21 +12,21 @@ import (
 )
 
 func BenchmarkSequentialCreate(b *testing.B) {
-	tester := CabinetTest{bench: b}
-	tester.setup(20)
+	it := CabinetTest{bench: b}
+	it.setup(20)
 
 	for n := 0; n < b.N; n++ {
-		_, _ = tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
+		_, _ = it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
 	}
 
-	tester.tearDown()
+	it.tearDown()
 }
 
 func BenchmarkSequentialGet(b *testing.B) {
-	tester := CabinetTest{bench: b}
-	tester.setup(20)
+	it := CabinetTest{bench: b}
+	it.setup(20)
 
-	sq, err := tester.client.SequentialCreate(tester.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
+	sq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
 
 	if err != nil{
 		b.Fatalf("Unable to setup: %v", err)
@@ -35,8 +35,8 @@ func BenchmarkSequentialGet(b *testing.B) {
 	b.StartTimer()
 
 	for n := 0; n < b.N; n++ {
-		_, _ = tester.client.SequentialGet(tester.ctx, &pb.Sequential{Type: "n", Seqid: sq.GetSeqid()})
+		_, _ = it.client.SequentialGet(it.ctx, &pb.Sequential{Type: "n", Seqid: sq.GetSeqid()})
 	}
 
-	tester.tearDown()
+	it.tearDown()
 }
