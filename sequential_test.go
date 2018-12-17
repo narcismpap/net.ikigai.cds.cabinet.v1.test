@@ -349,7 +349,7 @@ func TestSequenceList(t *testing.T) {
 	listCtx, listCancel := context.WithTimeout(context.Background(), 3 * time.Second) // 3s, reads must be fast
 	defer listCancel()
 
-	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: TestSequentialSize}
+	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5}
 	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{
 		Type: randType, Opt: listOpt,
 		IncludeUuid: true, IncludeSeqid: true,

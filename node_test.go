@@ -53,7 +53,7 @@ func TestNodeCreateListAll(t *testing.T) {
 		NodeType: nType,
 		IncludeType: true, IncludeId: true, IncludeProp: true,
 		Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
 	},})
 
 	if err != nil{
@@ -107,7 +107,7 @@ func TestNodeCreateListAll(t *testing.T) {
 		NodeType: nType,
 		IncludeType: true, IncludeId: true, IncludeProp: true,
 		Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
 		},})
 
 	if err != nil{

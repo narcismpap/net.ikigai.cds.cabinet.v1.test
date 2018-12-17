@@ -13,13 +13,19 @@ import (
 )
 
 func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string{
-	stream, err 	:= it.client.Transaction(it.ctx)
-	tempMap 		:= make(map[uint32]string)
-	idMap 			:= make(map[string]string)
-	var tMutex 		sync.Mutex
+	stream, err := it.client.Transaction(it.ctx)
+	tempMap 	:= make(map[uint32]string)
+	idMap 		:= make(map[string]string)
+	tMutex 		:= sync.Mutex{}
 
 	if err != nil {
 		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, err)
+		return idMap
+	}
+
+	if len(*actions) == 0{
+		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, "No actions supplied")
+		return idMap
 	}
 
 	wc := make(chan struct{})

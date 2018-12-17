@@ -29,6 +29,8 @@ const (
 
 /*
 func TestExample(t *testing.T) {
+	t.Parallel()
+
 	it := CabinetTest{test: t}
 	it.setup(4)
 

@@ -115,7 +115,7 @@ func indexCheckList(it *CabinetTest, nodes map[string]*pb.Node, indexType uint32
 		Index: indexType, Value: val,
 		IncludeIndex: true, IncludeValue: true, IncludeProp: true, IncludeNode: true,
 		Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
 		},})
 
 	if err != nil{

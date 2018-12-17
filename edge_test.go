@@ -45,7 +45,7 @@ func TestEdgeCreateListAll(t *testing.T) {
 		Subject: eSubject, Predicate: predSeq.Seqid,
 		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget:true,
 		Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize,
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
 		},})
 
 	eReceived := uint32(0)
@@ -96,7 +96,7 @@ func TestEdgeCreateListAll(t *testing.T) {
 		Subject: eSubject, Predicate: predSeq.Seqid,
 		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget:true,
 		Opt: &pb.ListOptions{
-			Mode: pb.ListRange_ALL, PageSize: 100,
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
 		},})
 
 	if err != nil{
