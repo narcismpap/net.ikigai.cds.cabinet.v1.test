@@ -13,8 +13,6 @@ import (
 )
 
 func TestMetaNodeCreateListAll(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -28,8 +26,6 @@ func TestMetaNodeCreateListAll(t *testing.T) {
 }
 
 func TestMetaEdgeCreateListAll(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(4)
 

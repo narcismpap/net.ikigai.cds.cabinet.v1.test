@@ -24,10 +24,8 @@ func nodeWithoutPayload(n *pb.Node) *pb.Node{
 }
 
 func TestTransactionNodeSimpleCRUD(t *testing.T) {
-	t.Parallel()
-
-	itMutation := CabinetTest{test: t}
-	itMutation.setup(2)
+	it := CabinetTest{test: t}
+	it.setup(2)
 
 	n1 := []pb.TransactionAction{
 		{ActionId: 1, Action: &pb.TransactionAction_NodeCreate{NodeCreate: &pb.Node{Type: 1, Version: 1, Id: "tmp:1"}}},
@@ -35,21 +33,15 @@ func TestTransactionNodeSimpleCRUD(t *testing.T) {
 		{ActionId: 3, Action: &pb.TransactionAction_NodeDelete{NodeDelete: &pb.Node{Type: 1, Id: "tmp:1"}}},
 	}
 
-	mapIDs := CDSTransactionRunner(&n1, &itMutation)
-	itMutation.tearDown()
+	mapIDs := CDSTransactionRunner(&n1, &it)
 
-	itRead := CabinetTest{test: t}
-	itRead.setup(2)
+	expectedNull, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:1"]})
+	validateErrorNotFound(mapIDs["tmp:1"], expectedNull, &it, err)
 
-	expectedNull, err := itRead.client.NodeGet(itRead.ctx, &pb.NodeGetRequest{NodeType: 1, Id: mapIDs["tmp:1"]})
-	validateErrorNotFound(mapIDs["tmp:1"], expectedNull, &itRead, err)
-
-	itRead.tearDown()
+	it.tearDown()
 }
 
 func TestTransactionNodeMultiCRUD(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(4)
 

@@ -29,8 +29,6 @@ const (
 
 /*
 func TestExample(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(4)
 
@@ -41,6 +39,8 @@ func TestExample(t *testing.T) {
 */
 
 type CabinetTest struct{
+	configured bool
+
 	client pb.CDSCabinetClient
 	test *testing.T
 	bench *testing.B
@@ -54,6 +54,12 @@ type CabinetTest struct{
 }
 
 func (s *CabinetTest) setup(timout uint32){
+	if s.configured{
+		panic("CabinetTest.setup() called multiple times")
+	}
+
+	s.configured = true
+
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure())
 
@@ -67,7 +73,7 @@ func (s *CabinetTest) setup(timout uint32){
 	s.client = pb.NewCDSCabinetClient(s.conn)
 	s.ctx, s.cancel = context.WithTimeout(context.Background(), time.Duration(timout) * time.Second)
 
-	// s.test.Parallel()
+	s.test.Parallel()
 }
 
 func (s *CabinetTest) tearDown(){

@@ -14,8 +14,6 @@ import (
 )
 
 func TestIndexCreateListAll(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(4)
 

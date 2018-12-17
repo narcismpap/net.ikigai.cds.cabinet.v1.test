@@ -27,8 +27,6 @@ func metaWithoutPayload(m *pb.Meta) *pb.Meta{
 }
 
 func TestTransactionMetaEdgeCRUD(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(2)
 
@@ -41,8 +39,6 @@ func TestTransactionMetaEdgeCRUD(t *testing.T) {
 }
 
 func TestTransactionMetaNodeCRUD(t *testing.T) {
-	t.Parallel()
-
 	it := CabinetTest{test: t}
 	it.setup(2)
 

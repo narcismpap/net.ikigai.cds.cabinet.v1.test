@@ -19,8 +19,6 @@ const (
 )
 
 func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
-	t.Parallel()
-
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyzbt1"},
@@ -35,8 +33,6 @@ func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 }
 
 func TestTransactionCounterEdgeSimpleCRUD(t *testing.T) {
-	t.Parallel()
-
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
 		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 1, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}},
@@ -59,20 +55,17 @@ func counterWithValue(c *pb.Counter, v int64) (r *pb.Counter){
 }
 
 func CounterSharedOrchestrate(t *testing.T, s1 *pb.Counter, s2 *pb.Counter) {
-	it1 := CabinetTest{test: t}
-	it1.setup(4)
-	CounterSharedS1(it1, s1, s2)
-	it1.tearDown()
+	it := CabinetTest{test: t}
+	it.setup(4)
+	CounterSharedS1(it, s1, s2)
 
 	// must wait to hopefully flush the atomic cache. Can yield false results if requested too soon
 	if PerformAtomicReads {
 		time.Sleep(60 * time.Second)
 	}
 
-	it2 := CabinetTest{test: t}
-	it2.setup(4)
-	CounterSharedS2(it2, s1, s2)
-	it2.tearDown()
+	CounterSharedS2(it, s1, s2)
+	it.tearDown()
 }
 
 func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {

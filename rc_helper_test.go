@@ -36,7 +36,6 @@ type ReadCheckValidator struct{
 }
 
 func doReadCheck(t *testing.T, from int, to int){
-	t.Parallel()
 	it := CabinetTest{test: t}; it.setup(4)
 
 	r := ReadCheckValidator{
