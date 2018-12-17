@@ -25,6 +25,6 @@ func validatePayload(ob interface{}, it *CabinetTest, expect []byte, receive []b
 	if string(receive) != string(expect){
 		it.logThing(ob, errors.New(fmt.Sprintf("Payload mismath. Received [%s] expected [%s]", receive, expect)), "PayloadVerify")
 	}else{
-		it.test.Logf("payload ok: %s", receive)
+		it.test.Logf("validatePayload(%v) = Match [%s]", ob, receive)
 	}
 }

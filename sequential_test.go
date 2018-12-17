@@ -349,11 +349,14 @@ func TestSequenceList(t *testing.T) {
 	listCtx, listCancel := context.WithTimeout(context.Background(), 3 * time.Second) // 3s, reads must be fast
 	defer listCancel()
 
-	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: 100}
+	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: TestSequentialSize}
 	lStr, err := tester.client.SequentialList(listCtx, &pb.SequentialListRequest{
-		Type: randType, Opt: listOpt, IncludeUuid: true, IncludeSeqid: true,
+		Type: randType, Opt: listOpt,
+		IncludeUuid: true, IncludeSeqid: true,
 	})
+
 	expID := uint32(1)
+	sReceived := 0
 
 	if err != nil{
 		tester.test.Errorf("[E] %v.SequentialList(%s) = _. %v", tester.client, randType, err)
@@ -367,6 +370,7 @@ func TestSequenceList(t *testing.T) {
 				tester.test.Errorf("[E] %v.SequentialList(_) = _, %v", tester.client, err)
 				break
 			}else {
+				sReceived += 1
 				isError := false
 
 				if sequence.GetSeqid() != expID {
@@ -386,6 +390,10 @@ func TestSequenceList(t *testing.T) {
 
 			expID += 1
 		}
+	}
+
+	if sReceived != i{
+		tester.test.Errorf("[E] Expected %d sequences, got %d", i, sReceived)
 	}
 
 	tester.tearDown()
