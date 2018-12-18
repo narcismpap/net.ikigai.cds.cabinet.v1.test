@@ -34,20 +34,16 @@ func TestTransactionReadCheckNode(t *testing.T) {
 	cds := cabinet.Transaction{}
 	cds.Setup(it.ctx, it.client)
 
-	err := func() error{
-		cds.O(&pb.TransactionAction{
-			Action: &pb.TransactionAction_ReadCheck{ReadCheck: &pb.ReadCheckRequest{
-				Source: n1IRI, Operator: pb.CheckOperators_EQUAL, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val: "not good"}},
-			}}})
+	cds.O(&pb.TransactionAction{
+		Action: &pb.TransactionAction_ReadCheck{ReadCheck: &pb.ReadCheckRequest{
+			Source: n1IRI, Operator: pb.CheckOperators_EQUAL, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val: "not good"}},
+		}}})
 
-		cds.O(&pb.TransactionAction{
-			Action: &pb.TransactionAction_NodeUpdate{NodeUpdate: nodeWithPayload(n1, p2)},
-		})
+	cds.O(&pb.TransactionAction{
+		Action: &pb.TransactionAction_NodeUpdate{NodeUpdate: nodeWithPayload(n1, p2)},
+	})
 
-		return cds.Commit()
-	}()
-
-	checkTransactionFailed(&it, err, "E(0x013)")
+	checkTransactionFailed(&it, cds.Commit(), "E(0x013)")
 
 	// should still have p1
 	el1, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: n1.Type, Id: n1.Id})
@@ -76,8 +72,7 @@ func TestTransactionReadCheckNode(t *testing.T) {
 		NodeUpdate: nodeWithPayload(n1, p2),
 	}})
 
-	err2 := cds2.Commit()
-	checkTransactionSuccess(&it, err2)
+	checkTransactionSuccess(&it, cds2.Commit())
 
 	el2, err := it.client.NodeGet(it.ctx, &pb.NodeGetRequest{NodeType: n1.Type, Id: n1.Id})
 	it.logThing(el2, err, "NodeGet")
