@@ -53,26 +53,6 @@ type Transaction struct{
 	ctx 	context.Context
 }
 
-func (c *Transaction) Operation(o *pb.TransactionAction){
-	if _, inActions := c.actions[o.ActionId]; inActions{
-		c.queueErr = append(c.queueErr, &TransactionError{msg: "duplicate actionID", class: TRANSACTION_ERROR_OPERATION})
-		return
-	}
-
-	c.actions[o.ActionId] = o
-	c.actionIDs = append(c.actionIDs, o.ActionId)
-	c.actPos += 1
-}
-
-func (c *Transaction) O(o *pb.TransactionAction){
-	o.ActionId = c.actPos
-	c.Operation(o)
-}
-
-func (c *Transaction) Pos() uint32{
-	return c.actPos
-}
-
 func (c *Transaction) Setup(ctx context.Context, cli pb.CDSCabinetClient){
 	c.actions 	= make(map[uint32]*pb.TransactionAction)
 	c.response 	= make(map[uint32]*pb.TransactionActionResponse)
@@ -89,6 +69,30 @@ func (c *Transaction) Setup(ctx context.Context, cli pb.CDSCabinetClient){
 	c.resError 	= nil
 }
 
+func (c *Transaction) Operation(o pb.TransactionAction){
+	if _, inActions := c.actions[o.ActionId]; inActions{
+		c.queueErr = append(c.queueErr, &TransactionError{msg: "duplicate actionID", class: TRANSACTION_ERROR_OPERATION})
+		return
+	}
+
+	c.actions[o.ActionId] = &o
+	c.actionIDs = append(c.actionIDs, o.ActionId)
+}
+
+func (c *Transaction) O(o *pb.TransactionAction){
+	o.ActionId = c.actPos
+	c.actPos += 1
+
+	c.Operation(*o)
+}
+
+func (c *Transaction) Pos() uint32{
+	return c.actPos
+}
+
+func (c *Transaction) GetIdMap() map[string]string{
+	return c.idMap
+}
 
 func (c *Transaction) Commit() error{
 	if len(c.actions) == 0{
@@ -110,7 +114,7 @@ func (c *Transaction) Commit() error{
 	go func(){
 		for {
 			actionResponse, err := stream.Recv()
-			//fmt.Printf("T.(receive) = %v, %v\n", actionResponse, err)
+			// fmt.Printf("T.(receive) = %v, %v\n", actionResponse, err)
 
 			if err == io.EOF {
 				close(wc); return
@@ -136,7 +140,7 @@ func (c *Transaction) Commit() error{
 	}()
 
 	for _, aID := range c.actionIDs {
-		fmt.Printf("T.(send) %v\n", c.actions[aID])
+		// fmt.Printf("T.(send) %v\n", c.actions[aID])
 
 		if err := stream.Send(c.actions[aID]); err != nil {
 			return &TransactionError{msg: fmt.Sprintf("sending error: %s", err), class: TRANSACTION_ERROR_SENDING}
