@@ -151,10 +151,11 @@ func TestTransactionEdgeClear(t *testing.T) {
 	pos := uint32(0)
 
 	edgeSubject := MockRandomNodeID()
+	predicate := uint32(MockRandomInt(10, 100000))
 
 	// create edges
 	for pos < TestSequentialSize{
-		edge := &pb.Edge{Subject: edgeSubject, Predicate: 2018, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
+		edge := &pb.Edge{Subject: edgeSubject, Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
 
 		edges = append(edges, edge)
 		trx = append(trx, pb.TransactionAction{
@@ -177,7 +178,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 
 	// clear all edges
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: 2018, Target: "*"}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: predicate, Target: "*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)

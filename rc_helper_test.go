@@ -222,7 +222,7 @@ func (r *ReadCheckValidator) check(rq *pb.ReadCheckRequest, expected bool){
 	rc, err := r.it.client.ReadCheck(r.it.ctx, rq)
 	r.it.logThing(rc, err, "ReadCheck")
 
-	if rc.Result == expected{
+	if rc != nil && rc.Result == expected{
 		r.it.test.Logf("ReadCheck(%v) is %v", rq, expected)
 	}else{
 		r.it.test.Errorf("[E] ReadCheck(%v) failed, expected %v", rq, expected)

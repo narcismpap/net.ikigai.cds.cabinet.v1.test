@@ -16,7 +16,9 @@ func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[
 	stream, err := it.client.Transaction(it.ctx)
 	tempMap 	:= make(map[uint32]string)
 	idMap 		:= make(map[string]string)
-	tMutex 		:= sync.Mutex{}
+	idMux 		:= sync.Mutex{}
+	tmpMux 		:= sync.Mutex{}
+
 
 	if err != nil {
 		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, err)
@@ -48,9 +50,13 @@ func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[
 
 				switch tReq := in.Response.(type) {
 				case *pb.TransactionActionResponse_NodeCreate:
-					tMutex.Lock()
+					idMux.Lock()
+					tmpMux.Lock()
+
 					idMap[tempMap[in.ActionId]] = tReq.NodeCreate.Id
-					tMutex.Unlock()
+
+					tmpMux.Unlock()
+					idMux.Unlock()
 				}
 			}
 		}
@@ -63,7 +69,9 @@ func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[
 
 		switch tReq := action.Action.(type) {
 			case *pb.TransactionAction_NodeCreate:
+				tmpMux.Lock()
 				tempMap[action.ActionId] = tReq.NodeCreate.Id
+				tmpMux.Unlock()
 			}
 	}
 

@@ -46,14 +46,16 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 	metas := make(map[uint32]*pb.Meta)
 	trx := make([]pb.TransactionAction, 0)
 
+	randSeq := &RandomSequence{min: 1000, max: 65000, sequence: make(map[uint32]bool)}
+
 	for pos < TestSequentialSize{
 		tmpMeta := &pb.Meta{Object: m.Object}
-		tmpMeta.Key = uint32(MockRandomInt(1000, 50000))
+		tmpMeta.Key = randSeq.new()
 		tmpMeta.Val = MockRandomPayload()
 
 		metas[tmpMeta.Key] = tmpMeta
 		trx = append(trx, pb.TransactionAction{
-			ActionId: pos, Action: &pb.TransactionAction_MetaUpdate{MetaUpdate: tmpMeta},
+			ActionId: pos + 1, Action: &pb.TransactionAction_MetaUpdate{MetaUpdate: tmpMeta},
 		})
 
 		pos += 1
@@ -72,7 +74,7 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 		metas[mKey].Val = MockRandomPayload()
 
 		updateTrx = append(updateTrx, pb.TransactionAction{
-			ActionId: pos, Action: &pb.TransactionAction_MetaUpdate{MetaUpdate: metas[mKey]},
+			ActionId: pos + 1, Action: &pb.TransactionAction_MetaUpdate{MetaUpdate: metas[mKey]},
 		})
 
 		pos += 1
@@ -88,7 +90,7 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 	for mKey := range metas{
 		if pos % 2 == 0 {
 			messTrx = append(messTrx, pb.TransactionAction{
-				ActionId: pos, Action: &pb.TransactionAction_MetaDelete{MetaDelete: metaWithoutPayload(metas[mKey])},
+				ActionId: pos + 1, Action: &pb.TransactionAction_MetaDelete{MetaDelete: metaWithoutPayload(metas[mKey])},
 			})
 		}
 

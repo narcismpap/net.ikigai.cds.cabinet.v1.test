@@ -6,8 +6,7 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/segmentio/ksuid"
 	"log"
-	mathrand "math/rand"
-	"time"
+	"math/big"
 )
 
 func MockRandomEdge() *pb.Edge{
@@ -67,6 +66,42 @@ func MockRandomAlpha(length int) string{
 }
 
 func MockRandomInt(min int, max int) int{
-	mathrand.Seed(time.Now().UnixNano())
-	return mathrand.Intn(max - min) + min
+	v := max - min
+	i, err := rand.Int(rand.Reader, big.NewInt(int64(v)))
+
+	if err != nil{
+		panic(err)
+	}
+
+	return int(i.Int64()) + min
+}
+
+type RandomSequence struct{
+	sequence map[uint32]bool
+	max int
+	min int
+}
+
+func (s *RandomSequence) new() uint32{
+	var nn uint32
+
+	max := uint8(100)
+	c := uint8(0)
+
+	for {
+		if c >= max{
+			panic("too many attempts to generate rand int")
+		}
+
+		nn = uint32(MockRandomInt(s.min, s.max))
+
+		if _, hasKey := s.sequence[nn]; !hasKey{
+			break
+		}
+
+		c += 1
+	}
+
+	s.sequence[nn] = true
+	return nn
 }
