@@ -168,6 +168,7 @@ func (r *ReadCheckValidator) newMetaNodeIRI(payload []byte) string{
 }
 
 func (r *ReadCheckValidator) touchExists(){
+	// positive test
 	r.check(&pb.ReadCheckRequest{
 		Source: r.sourceIRI, Operator: pb.CheckOperators_EXISTS, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val:"*"}},
 	}, true)
@@ -216,6 +217,9 @@ func (r *ReadCheckValidator) eqMetaNode(){
 func (r *ReadCheckValidator) eqSpecific(eT *pb.CheckTarget, neT *pb.CheckTarget){
 	r.check(&pb.ReadCheckRequest{Source: r.sourceIRI, Operator: pb.CheckOperators_EQUAL, Target: eT}, true)
 	r.check(&pb.ReadCheckRequest{Source: r.sourceIRI, Operator: pb.CheckOperators_NOT_EQUAL, Target: neT}, true)
+
+	r.check(&pb.ReadCheckRequest{Source: r.sourceIRI, Operator: pb.CheckOperators_EQUAL, Target: neT}, false)
+	r.check(&pb.ReadCheckRequest{Source: r.sourceIRI, Operator: pb.CheckOperators_NOT_EQUAL, Target: eT}, false)
 }
 
 func (r *ReadCheckValidator) check(rq *pb.ReadCheckRequest, expected bool){
