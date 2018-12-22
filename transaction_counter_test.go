@@ -21,12 +21,12 @@ const (
 func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
-		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyzbt1"},
+		Object:  &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyzbt1"},
 	}
 
 	s2 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
-		Object: &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyq8up"},
+		Object:  &pb.Counter_Node{Node: "1EKkY0eMD7bVu4jenaz6skyq8up"},
 	}
 
 	CounterSharedOrchestrate(t, s1, s2)
@@ -35,22 +35,22 @@ func TestTransactionCounterNodeSimpleCRUD(t *testing.T) {
 func TestTransactionCounterEdgeSimpleCRUD(t *testing.T) {
 	s1 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
-		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 1, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}},
+		Object:  &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0eMD7bVu4jenaz6skyzbt1", Predicate: 1, Target: "1EKkY1T6y4G3Xf2jtlaM39VucSX"}},
 	}
 
 	s2 := &pb.Counter{
 		Counter: uint32(MockRandomInt(1000, 65000)),
-		Object: &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0p9MGb3kAl9TO0dkOkHdQv", Predicate: 2000, Target: "1EKkXz3CjX9vALVvgyayPfECq6I"}},
+		Object:  &pb.Counter_Edge{Edge: &pb.Edge{Subject: "1EKkY0p9MGb3kAl9TO0dkOkHdQv", Predicate: 2000, Target: "1EKkXz3CjX9vALVvgyayPfECq6I"}},
 	}
 
 	CounterSharedOrchestrate(t, s1, s2)
 }
 
-func counterWithValue(c *pb.Counter, v int64) (r *pb.Counter){
+func counterWithValue(c *pb.Counter, v int64) (r *pb.Counter) {
 	return &pb.Counter{
-		Object: c.Object,
+		Object:  c.Object,
 		Counter: c.Counter,
-		Value: v,
+		Value:   v,
 	}
 }
 
@@ -82,7 +82,7 @@ func CounterSharedS1(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 	newCounterVal, err := it.client.CounterGet(it.ctx, s2)
 	it.logThing(newCounterVal, err, "CounterGet")
 
-	if newCounterVal.Value != int64(0){
+	if newCounterVal.Value != int64(0) {
 		it.test.Errorf("Newly initiated counter expected to be %d, is %d", 0, newCounterVal.Value)
 	}
 
@@ -162,15 +162,15 @@ func CounterSharedS2(it CabinetTest, s1 *pb.Counter, s2 *pb.Counter) {
 	c1Null, err1 := it.client.CounterGet(it.ctx, s1)
 	c2Null, err2 := it.client.CounterGet(it.ctx, s2)
 
-	if err1 != nil{
+	if err1 != nil {
 		it.test.Logf("[I] Counter %d on %v was deleted as expected", s1.Counter, s1.Object)
-	}else{
+	} else {
 		it.logThing(c1Null, errors.New("counter was supposed to be deleted"), "CounterGet")
 	}
 
-	if err2 != nil{
+	if err2 != nil {
 		it.test.Logf("[I] Counter %d on %v was deleted as expected", s2.Counter, s2.Object)
-	}else{
+	} else {
 		it.logThing(c2Null, errors.New("counter was supposed to be deleted"), "CounterGet")
 	}
 }

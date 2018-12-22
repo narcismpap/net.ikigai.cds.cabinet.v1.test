@@ -11,7 +11,7 @@ import (
 	pb "cds.ikigai.net/cabinet.v1/rpc"
 )
 
-func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string{
+func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[string]string {
 	cds := &cabinet.Transaction{}
 	cds.Setup(it.ctx, it.client)
 
@@ -21,7 +21,7 @@ func CDSTransactionRunner(actions *[]pb.TransactionAction, it *CabinetTest) map[
 
 	err := cds.Commit()
 
-	if err != nil{
+	if err != nil {
 		it.test.Errorf("%v.Transaction(_) = _, %v", it.client, err)
 		return nil
 	}

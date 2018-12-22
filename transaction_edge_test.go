@@ -16,20 +16,20 @@ import (
 // edgeClear
 // edgeMultiClear
 
-func edgeWithPayload(e *pb.Edge, payload []byte) *pb.Edge{
+func edgeWithPayload(e *pb.Edge, payload []byte) *pb.Edge {
 	return &pb.Edge{
-		Subject: e.Subject,
-		Predicate: e.Predicate,
-		Target: e.Target,
+		Subject:    e.Subject,
+		Predicate:  e.Predicate,
+		Target:     e.Target,
 		Properties: payload,
 	}
 }
 
-func edgeWithoutPayload(e *pb.Edge) *pb.Edge{
+func edgeWithoutPayload(e *pb.Edge) *pb.Edge {
 	return &pb.Edge{
-		Subject: e.Subject,
+		Subject:   e.Subject,
 		Predicate: e.Predicate,
-		Target: e.Target,
+		Target:    e.Target,
 	}
 }
 
@@ -82,7 +82,7 @@ func TestTransactionEdgeComplexCRUD(t *testing.T) {
 	}
 
 	_ = CDSTransactionRunner(&t3, &it)
-	
+
 	r5, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: e1})
 	it.logThing(r5, err, "EdgeGet")
 	validatePayload(r5, &it, []byte(""), r5.Properties)
@@ -141,7 +141,6 @@ func TestTransactionEdgeEmptyPayload(t *testing.T) {
 	it.tearDown()
 }
 
-
 func TestTransactionEdgeClear(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
@@ -154,7 +153,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 	predicate := uint32(MockRandomInt(10, 100000))
 
 	// create edges
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		edge := &pb.Edge{Subject: edgeSubject, Predicate: predicate, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
 
 		edges = append(edges, edge)
@@ -170,7 +169,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 	// get edges
 	pos = 0
 
-	for edgeIdx := range edges{
+	for edgeIdx := range edges {
 		eRsp, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
 		it.logThing(eRsp, err, "EdgeGet")
 		validatePayload(eRsp, &it, edges[edgeIdx].Properties, eRsp.Properties)
@@ -184,7 +183,7 @@ func TestTransactionEdgeClear(t *testing.T) {
 	_ = CDSTransactionRunner(&t2, &it)
 
 	// attempt to get any of the previous edges
-	for edgeIdx := range edges{
+	for edgeIdx := range edges {
 		eNull, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
 		validateErrorNotFound(edges[edgeIdx], eNull, &it, err)
 	}
@@ -206,10 +205,10 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 	p2 := uint32(MockRandomInt(10, 10000))
 
 	// create edges
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		predicate := uint32(p1)
 
-		if pos > 50{
+		if pos > 50 {
 			predicate = uint32(p2)
 		}
 
@@ -227,18 +226,18 @@ func TestTransactionEdgeMultiClear(t *testing.T) {
 
 	// clear P1 edges
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: p1, Target:"*"}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: edgeSubject, Predicate: p1, Target: "*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)
 
 	// attempt to get any of the previous edges
-	for edgeIdx := range edges{
+	for edgeIdx := range edges {
 		eEX, err := it.client.EdgeGet(it.ctx, &pb.EdgeGetRequest{Edge: edgeWithoutPayload(edges[edgeIdx])})
 
-		if edges[edgeIdx].Predicate == p2{
+		if edges[edgeIdx].Predicate == p2 {
 			validatePayload(eEX, &it, edges[edgeIdx].Properties, eEX.Properties)
-		}else{
+		} else {
 			validateErrorNotFound(edges[edgeIdx], eEX, &it, err)
 		}
 	}

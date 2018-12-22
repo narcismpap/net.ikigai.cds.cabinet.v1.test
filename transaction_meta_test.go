@@ -11,18 +11,18 @@ import (
 	"testing"
 )
 
-func metaWithPayload(m *pb.Meta, payload []byte) *pb.Meta{
+func metaWithPayload(m *pb.Meta, payload []byte) *pb.Meta {
 	return &pb.Meta{
 		Object: m.Object,
-		Key: m.Key,
-		Val: payload,
+		Key:    m.Key,
+		Val:    payload,
 	}
 }
 
-func metaWithoutPayload(m *pb.Meta) *pb.Meta{
+func metaWithoutPayload(m *pb.Meta) *pb.Meta {
 	return &pb.Meta{
 		Object: m.Object,
-		Key: m.Key,
+		Key:    m.Key,
 	}
 }
 
@@ -50,7 +50,7 @@ func TestTransactionMetaNodeCRUD(t *testing.T) {
 	it.tearDown()
 }
 
-func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
+func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta) {
 	p1, p2 := MockRandomPayload(), MockRandomPayload()
 
 	// new payload
@@ -93,7 +93,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 	metas := make([]*pb.Meta, 0)
 	trx := make([]pb.TransactionAction, 0)
 
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		tmpMeta := m2
 		tmpMeta.Key = pos
 		tmpMeta.Val = MockRandomPayload()
@@ -109,7 +109,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 	_ = CDSTransactionRunner(&trx, it)
 
 	// check results
-	for i := range metas{
+	for i := range metas {
 		iMeta, err := it.client.MetaGet(it.ctx, metaWithoutPayload(metas[i]))
 		it.logThing(iMeta, err, "MetaGet")
 		validatePayload(metas[i], it, metas[i].Val, iMeta.Val)
@@ -123,7 +123,7 @@ func MetaRunCRUD(it *CabinetTest, m1 *pb.Meta, m2 *pb.Meta){
 	_ = CDSTransactionRunner(&n4, it)
 
 	// verify cleared batches
-	for i := range metas{
+	for i := range metas {
 		nullMeta, err := it.client.MetaGet(it.ctx, metaWithoutPayload(metas[i]))
 		validateErrorNotFound(metas[i], nullMeta, it, err)
 	}

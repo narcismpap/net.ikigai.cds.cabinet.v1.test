@@ -11,13 +11,13 @@ import (
 	"testing"
 )
 
-func nodeWithPayload(n *pb.Node, payload []byte) *pb.Node{
+func nodeWithPayload(n *pb.Node, payload []byte) *pb.Node {
 	n2 := n
 	n.Properties = payload
 	return n2
 }
 
-func nodeWithoutPayload(n *pb.Node) *pb.Node{
+func nodeWithoutPayload(n *pb.Node) *pb.Node {
 	n2 := n
 	n.Properties = nil
 	return n2

@@ -28,7 +28,7 @@ func BenchmarkSequentialGet(b *testing.B) {
 
 	sq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: "n", Uuid: "XXXXX"})
 
-	if err != nil{
+	if err != nil {
 		b.Fatalf("Unable to setup: %v", err)
 	}
 

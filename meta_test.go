@@ -31,10 +31,10 @@ func TestMetaEdgeCreateListAll(t *testing.T) {
 
 	m1 := &pb.Meta{
 		Object: &pb.Meta_Edge{Edge: &pb.Edge{
-			Subject: MockRandomNodeID(),
+			Subject:   MockRandomNodeID(),
 			Predicate: uint32(MockRandomInt(1000, 8000)),
-			Target: MockRandomNodeID(),
-	}}}
+			Target:    MockRandomNodeID(),
+		}}}
 
 	SharedMetaNodeCreateListAll(&it, m1)
 
@@ -48,7 +48,7 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 
 	randSeq := &RandomSequence{min: 1000, max: 65000, sequence: make(map[uint32]bool)}
 
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		tmpMeta := &pb.Meta{Object: m.Object}
 		tmpMeta.Key = randSeq.new()
 		tmpMeta.Val = MockRandomPayload()
@@ -70,7 +70,7 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 	updateTrx := make([]pb.TransactionAction, 0)
 	pos = 0
 
-	for mKey := range metas{
+	for mKey := range metas {
 		metas[mKey].Val = MockRandomPayload()
 
 		updateTrx = append(updateTrx, pb.TransactionAction{
@@ -87,8 +87,8 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 	messTrx := make([]pb.TransactionAction, 0)
 	pos = 0
 
-	for mKey := range metas{
-		if pos % 2 == 0 {
+	for mKey := range metas {
+		if pos%2 == 0 {
 			messTrx = append(messTrx, pb.TransactionAction{
 				ActionId: pos + 1, Action: &pb.TransactionAction_MetaDelete{MetaDelete: metaWithoutPayload(metas[mKey])},
 			})
@@ -109,30 +109,30 @@ func SharedMetaNodeCreateListAll(it *CabinetTest, m *pb.Meta) {
 	metaCheckList(it, metas, m, 0)
 }
 
-func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size uint16){
+func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size uint16) {
 	metaList, err := it.client.MetaList(it.ctx, &pb.MetaListRequest{
-		Meta: m,
+		Meta:        m,
 		IncludeNode: true, IncludeProperty: true, IncludeValue: true,
 		IncludeSubject: true, IncludePredicate: true, IncludeTarget: true,
 
 		Opt: &pb.ListOptions{
 			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
-		},})
+		}})
 
 	lCnt := uint16(0)
 
-	if err != nil{
+	if err != nil {
 		it.test.Errorf("[E] %v.MetaList(%v) = _. %v", it.client, m, err)
-	}else{
+	} else {
 		for {
 			meta, err := metaList.Recv()
 
 			if err == io.EOF {
 				break
-			}else if err != nil {
+			} else if err != nil {
 				it.test.Errorf("[E] %v.MetaList(%s) = _, %v", it.client, m, err)
 				break
-			}else {
+			} else {
 				it.test.Logf("[I] %v.MetaList(%v) got %v", it.client, m, meta)
 
 				lCnt += 1
@@ -142,7 +142,7 @@ func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size 
 				case *pb.Meta_Node:
 					switch sType := m.Object.(type) {
 					case *pb.Meta_Node:
-						if sType.Node != mType.Node{
+						if sType.Node != mType.Node {
 							it.test.Errorf("[E] meta.object.node got %s expected %s", mType.Node, sType.Node)
 						}
 					default:
@@ -151,15 +151,15 @@ func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size 
 				case *pb.Meta_Edge:
 					switch sType := m.Object.(type) {
 					case *pb.Meta_Edge:
-						if mType.Edge.Subject != sType.Edge.Subject{
+						if mType.Edge.Subject != sType.Edge.Subject {
 							it.test.Errorf("[E] meta.object.edge.subject got %s expected %s", mType.Edge.Subject, sType.Edge.Subject)
 						}
 
-						if mType.Edge.Predicate != sType.Edge.Predicate{
+						if mType.Edge.Predicate != sType.Edge.Predicate {
 							it.test.Errorf("[E] meta.object.edge.predicate got %d expected %d ", mType.Edge.Predicate, sType.Edge.Predicate)
 						}
 
-						if mType.Edge.Target != sType.Edge.Target{
+						if mType.Edge.Target != sType.Edge.Target {
 							it.test.Errorf("[E] meta.object.edge.target got %s expected %s", mType.Edge.Target, sType.Edge.Target)
 						}
 					default:
@@ -169,11 +169,11 @@ func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size 
 					it.test.Errorf("Received invalid meta.object type: %v", mType)
 				}
 
-				if meta.Key != metas[meta.Key].Key{
+				if meta.Key != metas[meta.Key].Key {
 					it.test.Errorf("[E] meta.key got %d expected %d", meta.Key, metas[meta.Key].Key)
 				}
 
-				if string(meta.Val) != string(metas[meta.Key].Val){
+				if string(meta.Val) != string(metas[meta.Key].Val) {
 					it.test.Errorf("[E] meta.val got %s expected %s", meta.Val, metas[meta.Key].Val)
 				}
 
@@ -181,9 +181,9 @@ func metaCheckList(it *CabinetTest, metas map[uint32]*pb.Meta, m *pb.Meta, size 
 		}
 	}
 
-	if lCnt != size{
+	if lCnt != size {
 		it.test.Errorf("Expected %d records, got %d", size, lCnt)
-	}else{
+	} else {
 		it.test.Logf("Got %d expected Meta records", size)
 	}
 }

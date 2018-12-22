@@ -56,16 +56,16 @@ func TestTransactionReadCheckNode(t *testing.T) {
 
 	cds2.O(&pb.TransactionAction{
 		Action: &pb.TransactionAction_ReadCheck{ReadCheck: &pb.ReadCheckRequest{
-			Source: n1IRI, Operator: pb.CheckOperators_EQUAL, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val:string(p1)}},
+			Source: n1IRI, Operator: pb.CheckOperators_EQUAL, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val: string(p1)}},
 		}}})
 
 	cds2.O(&pb.TransactionAction{
 		Action: &pb.TransactionAction_ReadCheck{ReadCheck: &pb.ReadCheckRequest{
-			Source: n1IRI, Operator: pb.CheckOperators_EXISTS, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val:"*"}},
+			Source: n1IRI, Operator: pb.CheckOperators_EXISTS, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val: "*"}},
 		}}})
 
 	cds2.O(&pb.TransactionAction{Action: &pb.TransactionAction_ReadCheck{ReadCheck: &pb.ReadCheckRequest{
-		Source: n1IRI, Operator: pb.CheckOperators_TOUCH, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val:"*"}},
+		Source: n1IRI, Operator: pb.CheckOperators_TOUCH, Target: &pb.CheckTarget{Target: &pb.CheckTarget_Val{Val: "*"}},
 	}}})
 
 	cds2.O(&pb.TransactionAction{Action: &pb.TransactionAction_NodeUpdate{
@@ -81,18 +81,18 @@ func TestTransactionReadCheckNode(t *testing.T) {
 	it.tearDown()
 }
 
-func checkTransactionFailed(it *CabinetTest, err error, code string){
-	if err != nil && strings.Contains(err.Error(), code){
+func checkTransactionFailed(it *CabinetTest, err error, code string) {
+	if err != nil && strings.Contains(err.Error(), code) {
 		it.test.Logf("Transaction was rejected with code: %s", code)
-	}else{
+	} else {
 		it.test.Errorf("Transaction was not rejected with %s, got %v", code, err)
 	}
 }
 
-func checkTransactionSuccess(it *CabinetTest, err error){
-	if err != nil{
+func checkTransactionSuccess(it *CabinetTest, err error) {
+	if err != nil {
 		it.test.Errorf("Transaction failed with error: %s", err)
-	}else{
+	} else {
 		it.test.Log("Transaction was committed successfully")
 	}
 }

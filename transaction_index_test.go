@@ -11,19 +11,19 @@ import (
 	"testing"
 )
 
-func IndexWithPayload(i pb.Index, payload []byte) *pb.Index{
+func IndexWithPayload(i pb.Index, payload []byte) *pb.Index {
 	i2 := i
 	i2.Properties = payload
 	return &i2
 }
 
-func IndexWithoutPayload(i pb.Index) (r *pb.Index){
+func IndexWithoutPayload(i pb.Index) (r *pb.Index) {
 	i2 := i
 	i2.Properties = nil
 	return &i2
 }
 
-func IndexWithValuePayload(i pb.Index, value string, payload []byte) (r *pb.Index){
+func IndexWithValuePayload(i pb.Index, value string, payload []byte) (r *pb.Index) {
 	i2 := i
 	i2.Properties = payload
 	i2.Value = value
@@ -158,12 +158,12 @@ func TestTransactionIndexBatch(t *testing.T) {
 	trx := make([]pb.TransactionAction, TestSequentialSize)
 
 	// create all indexes
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		var tmpI *pb.Index
 
-		if pos % 2 == 0 {
+		if pos%2 == 0 {
 			tmpI = IndexWithValuePayload(*i1, MockRandomAlpha(10), MockRandomPayload())
-		}else{
+		} else {
 			tmpI = IndexWithValuePayload(*i2, MockRandomAlpha(10), MockRandomPayload())
 		}
 
@@ -178,7 +178,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 	_ = CDSTransactionRunner(&trx, &it)
 
 	// read indexes
-	for i := range indexes{
+	for i := range indexes {
 		uIndex, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*indexes[i])})
 		it.logThing(uIndex, err, "IndexGet")
 		validatePayload(indexes[i], &it, indexes[i].Properties, uIndex.Properties)
@@ -188,8 +188,8 @@ func TestTransactionIndexBatch(t *testing.T) {
 	dropPos := uint32(0)
 	dropTrx := make([]pb.TransactionAction, 0)
 
-	for i := range indexes{
-		if i % 2 == 0 {
+	for i := range indexes {
+		if i%2 == 0 {
 			dropTrx = append(dropTrx, pb.TransactionAction{
 				ActionId: dropPos, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*indexes[i])},
 			})
@@ -200,12 +200,12 @@ func TestTransactionIndexBatch(t *testing.T) {
 	_ = CDSTransactionRunner(&dropTrx, &it)
 
 	// read all indexes
-	for i := range indexes{
+	for i := range indexes {
 		hmIndex, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: indexes[i]})
 
-		if i % 2 == 0 {
+		if i%2 == 0 {
 			validateErrorNotFound(indexes[i], hmIndex, &it, err)
-		}else {
+		} else {
 			it.logThing(hmIndex, err, "IndexGet")
 			validatePayload(indexes[i], &it, indexes[i].Properties, hmIndex.Properties)
 		}
@@ -215,7 +215,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 	delPos := uint32(0)
 	delTrx := make([]pb.TransactionAction, TestSequentialSize)
 
-	for i := range indexes{
+	for i := range indexes {
 		delTrx[delPos] = pb.TransactionAction{
 			ActionId: delPos, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*indexes[i])},
 		}
@@ -225,7 +225,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 	_ = CDSTransactionRunner(&delTrx, &it)
 
 	// make sure all are removed
-	for i := range indexes{
+	for i := range indexes {
 		nullIndex, err := it.client.IndexGet(it.ctx, &pb.IndexGetRequest{Index: IndexWithoutPayload(*indexes[i])})
 		validateErrorNotFound(indexes[i], nullIndex, &it, err)
 	}

@@ -78,28 +78,30 @@ func TestSequenceBadSignatureList(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
 
-	ls1, err1 := it.client.SequentialList(it.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}, IncludeUuid:true})
+	ls1, err1 := it.client.SequentialList(it.ctx, &pb.SequentialListRequest{Opt: &pb.ListOptions{PageSize: 100}, IncludeUuid: true})
 
-	if err1 != nil{
+	if err1 != nil {
 		it.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err1)
-	}else{
-		for{
+	} else {
+		for {
 			ls1S, err := ls1.Recv()
-			if err == io.EOF {}else{
+			if err == io.EOF {
+			} else {
 				it.logRejection(ls1S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=100)")
 			}
 			break
 		}
 	}
 
-	ls2, err2 := it.client.SequentialList(it.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.ListRange_ALL}, IncludeUuid:true})
+	ls2, err2 := it.client.SequentialList(it.ctx, &pb.SequentialListRequest{Type: "n", Opt: &pb.ListOptions{Mode: pb.ListRange_ALL}, IncludeUuid: true})
 
-	if err2 != nil{
+	if err2 != nil {
 		it.test.Errorf("[E] SequentialList(Type=nil, opt.Mode, opt.PageSize=100) got %v", err2)
-	}else {
+	} else {
 		for {
 			ls2S, err := ls2.Recv()
-			if err == io.EOF {} else {
+			if err == io.EOF {
+			} else {
 				it.logRejection(ls2S, err, "SequentialList(Type=nil, opt.Mode, opt.PageSize=nil)")
 			}
 			break
@@ -127,7 +129,7 @@ func TestSequenceRepeatUUID(t *testing.T) {
 	valByUUID, err := it.client.SequentialGet(it.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
 	it.logThing(valByUUID, err, "SequentialGetByUUID")
 
-	if valByUUID.Seqid != mt1.Seqid{
+	if valByUUID.Seqid != mt1.Seqid {
 		it.test.Errorf("SeqID mismatch, expected %d got %d", mt1.Seqid, valByUUID.Seqid)
 	}
 
@@ -161,7 +163,7 @@ func TestSequenceRepeatClearUUID(t *testing.T) {
 	valByUUID, err := it.client.SequentialGet(it.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
 	it.logThing(valByUUID, err, "SequentialGetByUUID")
 
-	if valByUUID.Seqid != mt4.Seqid{
+	if valByUUID.Seqid != mt4.Seqid {
 		it.test.Errorf("SeqID mismatch, expected %d got %d", mt4.Seqid, valByUUID.Seqid)
 	}
 
@@ -189,11 +191,11 @@ func TestSequenceCRUD(t *testing.T) {
 	valBySeqID, err := it.client.SequentialGet(it.ctx, &pb.Sequential{Type: "n", Seqid: lastSeq.Seqid})
 	it.logThing(valBySeqID, err, "SequentialGetById")
 
-	if valByUUID.GetSeqid() != lastSeq.Seqid{
+	if valByUUID.GetSeqid() != lastSeq.Seqid {
 		it.test.Errorf("SequentialGet(%d): expected SeqID %d, actual %v", lastSeq.GetSeqid(), lastSeq.Seqid, valByUUID)
 	}
 
-	if valBySeqID.Seqid != valByUUID.Seqid || valBySeqID.Uuid != valByUUID.Uuid{
+	if valBySeqID.Seqid != valByUUID.Seqid || valBySeqID.Uuid != valByUUID.Uuid {
 		it.test.Errorf("SequentialGet(UUID & SeqID): results mismatch, [%v] and [%v]", valByUUID, valBySeqID)
 	}
 
@@ -201,7 +203,7 @@ func TestSequenceCRUD(t *testing.T) {
 	delStatus, err := it.client.SequentialDelete(it.ctx, &pb.Sequential{Type: "n", Uuid: seqUUID})
 	it.logThing(delStatus, err, "SequentialDelete")
 
-	if delStatus.GetStatus() != pb.MutationStatus_SUCCESS{
+	if delStatus.GetStatus() != pb.MutationStatus_SUCCESS {
 		it.test.Errorf("SequentialDelete(%d): expected %s, actual %s", lastSeq.GetSeqid(), pb.MutationStatus_SUCCESS, delStatus)
 	}
 
@@ -222,9 +224,9 @@ func TestSequenceNumberInit(t *testing.T) {
 	var randType = fmt.Sprintf("test_%s", it.randomAlpha(5))
 
 	newSeq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: randType, Uuid: MockRandomUUID()})
-	it.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", randType) )
+	it.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", randType))
 
-	if newSeq.GetSeqid() != 1{
+	if newSeq.GetSeqid() != 1 {
 		it.test.Errorf("Excepected newly created sequence to be 1, got %d", newSeq.GetSeqid())
 	}
 
@@ -238,13 +240,13 @@ func TestSequenceNumberSeries(t *testing.T) {
 	var randType = fmt.Sprintf("test_%s", it.randomAlpha(5))
 	expected := uint32(1)
 
-	for expected < TestSequentialSize{
+	for expected < TestSequentialSize {
 		var rUUID = MockRandomUUID()
 
 		serialSeq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: randType, Uuid: rUUID})
-		it.logThing(serialSeq, err, fmt.Sprintf("%d * SequentialCreate(%s)", expected, randType) )
+		it.logThing(serialSeq, err, fmt.Sprintf("%d * SequentialCreate(%s)", expected, randType))
 
-		if err == nil && serialSeq.GetSeqid() != expected{
+		if err == nil && serialSeq.GetSeqid() != expected {
 			it.test.Errorf("[E] Serial number test, got %d expected %d", serialSeq.GetSeqid(), expected)
 			break
 		}
@@ -266,7 +268,7 @@ func TestSequenceConflicts(t *testing.T) {
 
 	it.test.Logf("[I] Attempting to simulate live Sequential conflicts (%d) under %s", TestParallelSize, randPar)
 
-	for pc <= TestParallelSize{
+	for pc <= TestParallelSize {
 		parallelSequenceInsert(&it, randPar, &wg)
 		pc += 1
 	}
@@ -274,9 +276,9 @@ func TestSequenceConflicts(t *testing.T) {
 	wg.Wait()
 
 	// ensure there are no clashes
-	for i := range it.parallelIDs{
-		for j := range it.parallelIDs{
-			if i != j && it.parallelIDs[i] == it.parallelIDs[j]{
+	for i := range it.parallelIDs {
+		for j := range it.parallelIDs {
+			if i != j && it.parallelIDs[i] == it.parallelIDs[j] {
 				it.test.Errorf("[E] Parallel %d ID generation resulted in duplicate Sequence: [%d, %d]", TestParallelSize, i, j)
 			}
 
@@ -290,7 +292,7 @@ func TestSequenceConflicts(t *testing.T) {
 	})
 
 	for q := range it.parallelIDs {
-		if it.parallelIDs[q] != ex{
+		if it.parallelIDs[q] != ex {
 			it.test.Errorf("[E] Parallel %d expected sorted SeqID of %d, got %d", TestParallelSize, ex, it.parallelIDs[q])
 		}
 
@@ -309,14 +311,14 @@ func TestSequenceList(t *testing.T) {
 	var i = 0
 
 	// request new seq
-	for i < TestSequentialSize{
+	for i < TestSequentialSize {
 		var rUUID = MockRandomUUID()
 		serialSeq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: randType, Uuid: rUUID})
 
-		if err != nil{
+		if err != nil {
 			it.test.Errorf("[E] Unexpected %v.SequentialCreate(%s) = _. %v", it.client, randType, err)
 			break
-		}else{
+		} else {
 			UUIDMap[serialSeq.GetSeqid()] = rUUID
 		}
 
@@ -324,7 +326,7 @@ func TestSequenceList(t *testing.T) {
 	}
 
 	// test list
-	listCtx, listCancel := context.WithTimeout(context.Background(), 3 * time.Second) // 3s, reads must be fast
+	listCtx, listCancel := context.WithTimeout(context.Background(), 3*time.Second) // 3s, reads must be fast
 	defer listCancel()
 
 	listOpt := &pb.ListOptions{Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5}
@@ -336,18 +338,18 @@ func TestSequenceList(t *testing.T) {
 	expID := uint32(1)
 	sReceived := 0
 
-	if err != nil{
+	if err != nil {
 		it.test.Errorf("[E] %v.SequentialList(%s) = _. %v", it.client, randType, err)
-	}else{
+	} else {
 		for {
 			sequence, err := lStr.Recv()
 
 			if err == io.EOF {
 				break
-			}else if err != nil {
+			} else if err != nil {
 				it.test.Errorf("[E] %v.SequentialList(_) = _, %v", it.client, err)
 				break
-			}else {
+			} else {
 				sReceived += 1
 				isError := false
 
@@ -361,7 +363,7 @@ func TestSequenceList(t *testing.T) {
 					isError = true
 				}
 
-				if !isError{
+				if !isError {
 					it.test.Logf("[I] %v.SequentialList(%s) got %v", it.client, randType, sequence)
 				}
 			}
@@ -370,7 +372,7 @@ func TestSequenceList(t *testing.T) {
 		}
 	}
 
-	if sReceived != i{
+	if sReceived != i {
 		it.test.Errorf("[E] Expected %d sequences, got %d", i, sReceived)
 	}
 
@@ -382,9 +384,9 @@ func parallelSequenceInsert(it *CabinetTest, sType string, wg *sync.WaitGroup) {
 
 	go func() {
 		newSeq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: sType, Uuid: MockRandomUUID()})
-		it.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", sType) )
+		it.logThing(newSeq, err, fmt.Sprintf("SequentialCreate(%s)", sType))
 
-		if err == nil{
+		if err == nil {
 			it.parallelMux.Lock()
 			it.parallelIDs = append(it.parallelIDs, newSeq.GetSeqid())
 			it.parallelMux.Unlock()

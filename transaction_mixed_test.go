@@ -22,6 +22,5 @@ func TestTransactionGeography(t *testing.T) {
 	// setup meta in country.history, city.bio
 	// verify records
 
-
 	it.tearDown()
 }

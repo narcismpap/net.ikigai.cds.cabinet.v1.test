@@ -20,18 +20,18 @@ func TestEdgeCreateListAll(t *testing.T) {
 	trx := make([]pb.TransactionAction, 0)
 	pos := uint32(0)
 
-	predSeq, err  := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: "p", Uuid: MockRandomUUID()})
+	predSeq, err := it.client.SequentialCreate(it.ctx, &pb.Sequential{Type: "p", Uuid: MockRandomUUID()})
 	it.logThing("SeqCreate", err, "SequentialCreate")
 	eSubject := MockRandomNodeID()
 
 	// create nodes
-	for pos < TestSequentialSize{
+	for pos < TestSequentialSize {
 		edge := &pb.Edge{Subject: eSubject, Predicate: predSeq.Seqid, Target: MockRandomNodeID(), Properties: MockRandomPayload()}
 		edges[edge.Target] = edge
 
 		trx = append(trx, pb.TransactionAction{
 			ActionId: pos, Action: &pb.TransactionAction_EdgeUpdate{EdgeUpdate: edge},
-		},)
+		})
 
 		pos += 1
 	}
@@ -41,36 +41,36 @@ func TestEdgeCreateListAll(t *testing.T) {
 	// check list
 	lStr, err := it.client.EdgeList(it.ctx, &pb.EdgeListRequest{
 		Subject: eSubject, Predicate: predSeq.Seqid,
-		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget:true,
+		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget: true,
 		Opt: &pb.ListOptions{
 			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
-		},})
+		}})
 
 	eReceived := uint32(0)
 
-	if err != nil{
+	if err != nil {
 		it.test.Errorf("[E] %v.EdgeList(%s, %d) = _. %v", it.client, eSubject, predSeq.Seqid, err)
-	}else{
+	} else {
 		for {
 			edge, err := lStr.Recv()
 
 			if err == io.EOF {
 				break
-			}else if err != nil {
+			} else if err != nil {
 				it.test.Errorf("[E] %v.EdgeList(_) = _, %v", it.client, err)
 				break
-			}else {
+			} else {
 				eReceived += 1
 
 				if edge.Subject != edges[edge.Target].Subject {
 					it.test.Errorf("[E] edge.subject got %s expected %s", edge.Subject, edges[edge.Target].Subject)
-				}else if edge.Predicate != edges[edge.Target].Predicate {
+				} else if edge.Predicate != edges[edge.Target].Predicate {
 					it.test.Errorf("[E] edge.predicate got %d expected %d", edge.Predicate, edges[edge.Target].Predicate)
-				}else if edge.Target != edges[edge.Target].Target {
+				} else if edge.Target != edges[edge.Target].Target {
 					it.test.Errorf("[E] edge.target got %s expected %s", edge.Target, edges[edge.Target].Target)
-				}else if string(edge.Properties) != string(edges[edge.Target].Properties) {
+				} else if string(edge.Properties) != string(edges[edge.Target].Properties) {
 					it.test.Errorf("[E] edge.properties got %v expected %v", string(edge.Properties), string(edges[edge.Target].Properties))
-				}else{
+				} else {
 					it.test.Logf("[I] %v.EdgeList%s, %d) got %v", it.client, eSubject, predSeq.Seqid, edge)
 				}
 			}
@@ -78,13 +78,13 @@ func TestEdgeCreateListAll(t *testing.T) {
 	}
 
 	lStr = nil
-	if eReceived != pos{
+	if eReceived != pos {
 		it.test.Errorf("[E] Received %d edges, expected %d results", eReceived, pos)
 	}
 
 	// clear records
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: eSubject, Predicate: predSeq.Seqid, Target:"*"}}},
+		{ActionId: 1, Action: &pb.TransactionAction_EdgeClear{EdgeClear: &pb.Edge{Subject: eSubject, Predicate: predSeq.Seqid, Target: "*"}}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)
@@ -92,23 +92,23 @@ func TestEdgeCreateListAll(t *testing.T) {
 	// try to list again
 	nullList, err := it.client.EdgeList(it.ctx, &pb.EdgeListRequest{
 		Subject: eSubject, Predicate: predSeq.Seqid,
-		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget:true,
+		IncludeSubject: true, IncludePredicate: true, IncludeProp: true, IncludeTarget: true,
 		Opt: &pb.ListOptions{
 			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
-		},})
+		}})
 
-	if err != nil{
+	if err != nil {
 		it.test.Errorf("[E] %v.EdgeList(%s, %d) = _. %v", it.client, eSubject, predSeq.Seqid, err)
-	}else{
+	} else {
 		for {
 			edge, err := nullList.Recv()
 
 			if err == io.EOF {
 				break
-			}else if err != nil {
+			} else if err != nil {
 				it.test.Errorf("[E] %v.EdgeList(_) = _, %v", it.client, err)
 				break
-			}else {
+			} else {
 				it.test.Errorf("[E] Unexpected edge: %v", edge)
 			}
 		}
