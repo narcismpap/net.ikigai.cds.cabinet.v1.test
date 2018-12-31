@@ -13,6 +13,11 @@ import (
 	"testing"
 )
 
+type indexTestExpectedCount struct{
+	key string
+	results uint32
+}
+
 func TestIndexCreateListAll(t *testing.T) {
 	it := CabinetTest{test: t}
 	it.setup(4)
@@ -112,6 +117,7 @@ func TestIndexChoices(t *testing.T) {
 
 	trx := make([]pb.TransactionAction, 0)
 	indexes := make(map[string][]string)
+	expect := make([]indexTestExpectedCount, 0)
 	pos := uint32(0)
 
 	iType := uint32(8465)
@@ -139,10 +145,91 @@ func TestIndexChoices(t *testing.T) {
 		pos += 1
 	}
 
+	for iKey := range indexes{
+		expect = append(expect, indexTestExpectedCount{key: iKey, results: uint32(len(indexes[iKey]))})
+	}
+
 	_ = CDSTransactionRunner(&trx, &it)
+	trx = make([]pb.TransactionAction, 0)
 
 	// check choices
-	iChoicesCnt := uint16(0)
+	indexCheckChoices(&it, expect, iType)
+
+	// change nodes (cats -> alpha, dogs -> beta, drop half of ikigai.net)
+	indexes2 := make(map[string][]string)
+	pos2 := uint32(1)
+
+	for _, nodeId := range indexes["cats"]{
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos2, Action: &pb.TransactionAction_IndexDelete{IndexDelete: &pb.Index{
+				Type: iType, Node: nodeId, Value: "cats",
+			}}})
+
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos2 + 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: &pb.Index{
+				Type: iType, Node: nodeId, Value: "alpha",
+			}}})
+
+		pos2 += 2
+		indexes2["alpha"] = append(indexes2["alpha"], nodeId)
+	}
+
+	for _, nodeId := range indexes["dogs"]{
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos2, Action: &pb.TransactionAction_IndexDelete{IndexDelete: &pb.Index{
+				Type: iType, Node: nodeId, Value: "dogs",
+			}}})
+
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos2 + 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: &pb.Index{
+				Type: iType, Node: nodeId, Value: "beta",
+			}}})
+
+		pos2 += 2
+		indexes2["beta"] = append(indexes2["beta"], nodeId)
+	}
+
+	for iPos, nodeId := range indexes["ikigai.net"]{
+		if iPos % 2 == 0 {
+			trx = append(trx, pb.TransactionAction{
+				ActionId: pos2, Action: &pb.TransactionAction_IndexDelete{IndexDelete: &pb.Index{
+					Type: iType, Node: nodeId, Value: "ikigai.net",
+				}}})
+			pos2 += 1
+		}else{
+			indexes2["ikigai.net"] = append(indexes2["ikigai.net"], nodeId)
+		}
+	}
+
+	_ = CDSTransactionRunner(&trx, &it)
+	trx = make([]pb.TransactionAction, 0)
+
+	// check updates
+	expect2 := []indexTestExpectedCount{{key: "cats", results: 0}, {key: "dogs", results: 0}}
+	for iKey2 := range indexes2{
+		expect2 = append(expect2, indexTestExpectedCount{key: iKey2, results: uint32(len(indexes2[iKey2]))})
+	}
+
+	indexCheckChoices(&it, expect2, iType)
+
+	// drop indexes
+	rsp, err := it.client.IndexDrop(it.ctx, &pb.IndexDropRequest{Index: iType})
+
+	if err != nil{
+		it.test.Errorf("IndexDrop(): _, %v", err)
+	}else if rsp.Status != pb.MutationStatus_SUCCESS{
+		it.test.Errorf("IndexDrop(): got response: %v", rsp)
+	}
+
+	// check cleared results
+	expect3 := make([]indexTestExpectedCount, 0)
+	indexCheckChoices(&it, expect3, iType)
+
+	it.tearDown()
+}
+
+func indexCheckChoices(it *CabinetTest, expect []indexTestExpectedCount, iType uint32){
+	res := make(map[string]uint32)
 	iChoices, err := it.client.IndexChoices(it.ctx, &pb.IndexChoiceRequest{
 		Index: iType,
 		Opt: &pb.ListOptions{
@@ -161,27 +248,37 @@ func TestIndexChoices(t *testing.T) {
 				it.test.Errorf("[E] %v.IndexChoices(%d) = _. %v", it.client, iType, err)
 				break
 			} else {
-				iChoicesCnt += 1
-
-				if cnt, ok := indexes[idx.Value]; !ok{
-					it.test.Errorf("[E] key %s not in %v", idx.Value, indexes)
-				}else{
-					if uint32(len(cnt)) != idx.Count{
-						it.test.Errorf("%s: expected %d, got %d", idx.Value, uint32(len(cnt)), idx.Count)
-					}else{
-						it.test.Logf("Got %d results for %s", idx.Count, idx.Value)
-					}
-				}
-
+				res[idx.Value] = idx.Count
 			}
 		}
 	}
 
-	if iChoicesCnt != 3{
-		it.test.Errorf("expected %d records, got %d", TestSequentialSize, iChoicesCnt)
+	for e := range expect{
+		if res[expect[e].key] == expect[e].results{
+			it.test.Logf("%s: got %d results", expect[e].key, expect[e].results)
+		}else{
+			it.test.Errorf("%s: got %d, expected %d results", expect[e].key, res[expect[e].key], expect[e].results)
+		}
 	}
 
-	it.tearDown()
+	for e2 := range res{
+		found := false
+
+		for e3 := range expect{
+			if expect[e3].key == e2{
+				found = true
+				break
+			}
+		}
+
+		if found == false{
+			it.test.Errorf("indexCheckChoices: Got unexpected index: %s (%d)", e2, res[e2])
+		}
+	}
+
+	if len(res) != len(expect){
+		it.test.Errorf("expected %d records, got %d", len(expect), len(res))
+	}
 }
 
 func indexCheckList(it *CabinetTest, nodes map[string]*pb.Node, indexType uint32, val string, size uint16) {
