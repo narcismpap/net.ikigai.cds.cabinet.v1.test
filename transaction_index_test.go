@@ -40,12 +40,14 @@ func TestTransactionIndexSimpleCRUD(t *testing.T) {
 	i2 := &pb.Index{Type: 10, Node: MockRandomNodeID(), Value: "South Korea", Properties: nil}
 
 	t1 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: i1}},
-		{ActionId: 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i1, p1)}},
-		{ActionId: 3, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i1)}},
+		{ActionId: 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: i1}},
+		{ActionId: 2, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i1)}},
+		{ActionId: 3, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i1, p1)}},
+		{ActionId: 4, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i1)}},
 
-		{ActionId: 4, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p1)}},
-		{ActionId: 5, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p2)}},
+		{ActionId: 5, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i2, p1)}},
+		{ActionId: 6, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i2)}},
+		{ActionId: 7, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i2, p2)}},
 	}
 
 	_ = CDSTransactionRunner(&t1, &it)
@@ -81,8 +83,8 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 	i2 := &pb.Index{Type: 10, Node: MockRandomNodeID(), Value: "Argentina", Properties: nil}
 
 	t1 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: i1}},
-		{ActionId: 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p2)}},
+		{ActionId: 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: i1}},
+		{ActionId: 2, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i2, p2)}},
 	}
 
 	_ = CDSTransactionRunner(&t1, &it)
@@ -100,8 +102,8 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 
 	// update payloads
 	t2 := []pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i1, p3)}},
-		{ActionId: 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p4)}},
+		{ActionId: 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i1, p3)}},
+		{ActionId: 2, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i2, p4)}},
 	}
 
 	_ = CDSTransactionRunner(&t2, &it)
@@ -119,7 +121,7 @@ func TestTransactionIndexComplexCRUD(t *testing.T) {
 	// delete first, update second
 	t3 := []pb.TransactionAction{
 		{ActionId: 100, Action: &pb.TransactionAction_IndexDelete{IndexDelete: IndexWithoutPayload(*i1)}},
-		{ActionId: 4122, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: IndexWithPayload(*i2, p1)}},
+		{ActionId: 4122, Action: &pb.TransactionAction_IndexCreate{IndexCreate: IndexWithPayload(*i2, p1)}},
 	}
 
 	_ = CDSTransactionRunner(&t3, &it)
@@ -169,7 +171,7 @@ func TestTransactionIndexBatch(t *testing.T) {
 
 		indexes[pos] = tmpI
 		trx[pos] = pb.TransactionAction{
-			ActionId: pos, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: tmpI},
+			ActionId: pos, Action: &pb.TransactionAction_IndexCreate{IndexCreate: tmpI},
 		}
 
 		pos += 1

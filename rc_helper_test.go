@@ -106,7 +106,7 @@ func (r *ReadCheckValidator) newIndex(payload []byte) *pb.Index {
 	r.cIndx = append(r.cIndx, i)
 
 	_ = CDSTransactionRunner(&([]pb.TransactionAction{
-		{ActionId: 1, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: i}},
+		{ActionId: 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: i}},
 	}), r.it)
 
 	return i

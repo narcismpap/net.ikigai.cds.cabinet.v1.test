@@ -49,12 +49,12 @@ func TestIndexCreateListAll(t *testing.T) {
 
 		if npos%2 == 0 {
 			trx = append(trx, pb.TransactionAction{
-				ActionId: pos + 1, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: &pb.Index{
+				ActionId: pos + 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: &pb.Index{
 					Type: indexType, Node: tPos, Value: "cats", Properties: tmpNodes[tPos].Properties,
 				}}})
 		} else {
 			trx = append(trx, pb.TransactionAction{
-				ActionId: pos + 2, Action: &pb.TransactionAction_IndexUpdate{IndexUpdate: &pb.Index{
+				ActionId: pos + 2, Action: &pb.TransactionAction_IndexCreate{IndexCreate: &pb.Index{
 					Type: index2Type, Node: tPos, Value: "dogs", Properties: tmpNodes[tPos].Properties,
 				}}})
 		}
@@ -102,6 +102,84 @@ func TestIndexCreateListAll(t *testing.T) {
 	// check indexes again
 	indexCheckList(&it, iNodes, indexType, "cats", 0)
 	indexCheckList(&it, iNodes, index2Type, "dogs", 0)
+
+	it.tearDown()
+}
+
+func TestIndexChoices(t *testing.T) {
+	it := CabinetTest{test: t}
+	it.setup(4)
+
+	trx := make([]pb.TransactionAction, 0)
+	indexes := make(map[string][]string)
+	pos := uint32(0)
+
+	iType := uint32(8465)
+
+	// create indexes
+	for pos < TestSequentialSize {
+		var iKey string
+
+		if pos % 2 == 0 {
+			iKey = "cats"
+		}else if pos % 3 == 0{
+			iKey = "dogs"
+		}else{
+			iKey = "ikigai.net"
+		}
+
+		nID := MockRandomNodeID()
+		indexes[iKey] = append(indexes[iKey], nID)
+
+		trx = append(trx, pb.TransactionAction{
+			ActionId: pos + 1, Action: &pb.TransactionAction_IndexCreate{IndexCreate: &pb.Index{
+				Type: iType, Node: nID, Value: iKey,
+			}}})
+
+		pos += 1
+	}
+
+	_ = CDSTransactionRunner(&trx, &it)
+
+	// check choices
+	iChoicesCnt := uint16(0)
+	iChoices, err := it.client.IndexChoices(it.ctx, &pb.IndexChoiceRequest{
+		Index: iType,
+		Opt: &pb.ListOptions{
+			Mode: pb.ListRange_ALL, PageSize: TestSequentialSize * 5,
+		}})
+
+	if err != nil {
+		it.test.Errorf("[E] %v.IndexChoices(%d) = _. %v", it.client, iType, err)
+	} else {
+		for {
+			idx, err := iChoices.Recv()
+
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				it.test.Errorf("[E] %v.IndexChoices(%d) = _. %v", it.client, iType, err)
+				break
+			} else {
+				iChoicesCnt += 1
+
+				if cnt, ok := indexes[idx.Value]; !ok{
+					it.test.Errorf("[E] key %s not in %v", idx.Value, indexes)
+				}else{
+					if uint32(len(cnt)) != idx.Count{
+						it.test.Errorf("%s: expected %d, got %d", idx.Value, uint32(len(cnt)), idx.Count)
+					}else{
+						it.test.Logf("Got %d results for %s", idx.Count, idx.Value)
+					}
+				}
+
+			}
+		}
+	}
+
+	if iChoicesCnt != 3{
+		it.test.Errorf("expected %d records, got %d", TestSequentialSize, iChoicesCnt)
+	}
 
 	it.tearDown()
 }

@@ -71,7 +71,7 @@ func TestEdgeCreateListAll(t *testing.T) {
 				} else if string(edge.Properties) != string(edges[edge.Target].Properties) {
 					it.test.Errorf("[E] edge.properties got %v expected %v", string(edge.Properties), string(edges[edge.Target].Properties))
 				} else {
-					it.test.Logf("[I] %v.EdgeList%s, %d) got %v", it.client, eSubject, predSeq.Seqid, edge)
+					it.test.Logf("[I] %v.EdgeList(%s, %d) got %v", it.client, eSubject, predSeq.Seqid, edge)
 				}
 			}
 		}
